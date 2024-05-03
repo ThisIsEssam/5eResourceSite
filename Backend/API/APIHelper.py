@@ -47,3 +47,9 @@ class ApiHelper:
         cls.logger("")
 
         return response
+
+
+    @classmethod
+    def return_json(cls, response):
+        response_json = response.json()
+        return response_json
