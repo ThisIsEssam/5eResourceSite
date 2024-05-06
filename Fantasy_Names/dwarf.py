@@ -1,5 +1,5 @@
-from fantasynames.data import dwarf_data, compound_tables
-from fantasynames.language import Language
+from Fantasy_Names.data import dwarf_data, compound_tables
+from Fantasy_Names.language import Language
 import random
 
 

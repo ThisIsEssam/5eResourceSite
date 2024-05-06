@@ -1,6 +1,6 @@
 from pprint import pprint
 
-from APIHelper import ApiHelper
+from Backend.API.APIHelper import ApiHelper
 
 
 def get_spells(spell=""):

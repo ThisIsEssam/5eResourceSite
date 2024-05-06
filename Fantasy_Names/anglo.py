@@ -1,5 +1,5 @@
-from fantasynames.data import anglo_data
-from fantasynames.language import Language
+from Fantasy_Names.data import anglo_data
+from Fantasy_Names.language import Language
 import random
 
 

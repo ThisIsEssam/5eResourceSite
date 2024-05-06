@@ -1,7 +1,7 @@
-from fantasynames.data import anglo_data, compound_tables
-from fantasynames.language import Language
-from fantasynames.anglo import Anglo
-from fantasynames.french import French
+from Fantasy_Names.data import anglo_data, compound_tables
+from Fantasy_Names.language import Language
+from Fantasy_Names.anglo import Anglo
+from Fantasy_Names.french import French
 import random
 
 

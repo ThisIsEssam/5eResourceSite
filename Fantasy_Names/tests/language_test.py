@@ -1,4 +1,4 @@
-from fantasynames.language import Language
+from Fantasy_Names.language import Language
 
 # This file tests to make sure the basic process for name generation
 # works as expected.
@@ -21,17 +21,20 @@ class TestLanguage(Language):
     @classmethod
     def _name1_male(cls) -> str:
         cols = [name1_col1, name1_col2]
+        print(cls._name_from_lists(cols))
         return cls._name_from_lists(cols)
 
     @classmethod
     def _name1_female(cls) -> str:
         name = cls._name1_male() + cls._name_from_lists([name1_female_suffixes])
+        print(name)
         return name
 
     @classmethod
     def _name2(cls) -> str:
         cols = [name2_col1, name2_col2]
         name = cls._name_from_lists(cols)
+        print(name)
         return name
 
 

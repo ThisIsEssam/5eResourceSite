@@ -1,5 +1,5 @@
-from fantasynames.data import hobbit_data
-from fantasynames.language import Language
+from Fantasy_Names.data import hobbit_data
+from Fantasy_Names.language import Language
 
 
 class Hobbit(Language):

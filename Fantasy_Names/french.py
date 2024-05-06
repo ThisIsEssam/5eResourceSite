@@ -1,6 +1,6 @@
-from fantasynames.data import french_data
+from Fantasy_Names.data import french_data
 import random
-from fantasynames.language import Language
+from Fantasy_Names.language import Language
 
 
 class French(Language):
