@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/c:/Users/essam/5eResourceSite/Backend/API')
 import pytest
 
 import getResource

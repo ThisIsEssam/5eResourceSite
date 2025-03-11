@@ -1,5 +1,4 @@
 from Fantasy_Names.language import Language
-
 # This file test to make sure capitalization and special transformation
 # rules are applied as expected.
 
