@@ -14,17 +14,16 @@ class ApiHelper:
     @classmethod
     def request(cls, url_method: str, url: str, headers: str, payload: str, expected_status_code: int,
                 expected_response_text: bool = None, the_files: bool = None):
-        url = "https://www.dnd5eapi.co/api/" + url
         assert url_method in ({"POST", "GET", "DELETE", "PUT", "PATCH"}), "Needs to be a valid RestAPI Method"
         payload = json.dumps(payload)
         if the_files is None:
-            response = requests.request(url_method, url, headers=headers, data=payload, verify=False)
+            response = requests.request(url_method, url, headers=headers, data=payload, verify=True)
         else:
-            response = requests.request("POST", url, headers=headers, files=the_files, verify=False)
+            response = requests.request("POST", url, headers=headers, files=the_files, verify=True)
 
         assert response.status_code == expected_status_code, "Expected Status code - " + str(expected_status_code) \
                                                              + " Got - " + str(response.status_code) + "\n" + \
-                                                             response.text
+                                                             response.text + "\n" + url
         if expected_response_text is not None:
             assert response.text == expected_response_text
 

@@ -38,6 +38,7 @@ for i in range(0, 1):
     ran_lin = random.choice(lineage_list)
     ran_spells = random.sample(spell_list, 3)  # Select 3 random spells for each hero
 
+def get_random_name(ran_lin):
     if ran_lin.lower() == "dwarf":
         name = Fantasy_Names.dwarf()
     elif ran_lin.lower() == "dragonborn":
@@ -71,14 +72,14 @@ for i in range(0, 1):
         hero_profile = {
             "Name": new_hero.first_name + " " + new_hero.last_name,
             "Class: ": new_hero.class_name,
-            "Lineage: ": new_hero.race,
+            "Lineage: ": new_hero.lineage,
             "Spells: ": ran_spells
         }
     else:
         hero_profile = {
             "Name": new_hero.first_name + " " + new_hero.last_name,
             "Class: ": new_hero.class_name,
-            "Lineage: ": new_hero.race,
+            "Lineage: ": new_hero.lineage,
             "Spells: ": []
         }
         

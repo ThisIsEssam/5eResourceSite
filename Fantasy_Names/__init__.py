@@ -8,3 +8,4 @@ from Fantasy_Names.dragonborn import dragonborn
 from Fantasy_Names.orc import orc
 from Fantasy_Names.gnome import gnome
 from Fantasy_Names.tiefling import tiefling
+from Fantasy_Names.warforged import warforged

@@ -3,6 +3,83 @@ import typing as t
 """
 In this file, we store the various string arrays from which names are generated.
 """
+warforged_data: t.Dict[str, t.List] = {
+    "name1_col1": [
+        "walk'",
+        "cru$h",
+        "lift",
+        "sm@sh",
+        "guard",
+        "scout",
+        "vale",
+        "1ron",
+        "luck",
+        "shi3ld",
+        "axe",
+        "storm",
+        "m3rch",
+        "sw3lt",
+        "bl0ck",
+        "vibe",
+        "awake",
+        "sh3ph",
+        "guide",
+        "act",
+        "stomp",
+        "flail",
+        "fl@me",
+        "dri11",
+        "box",
+        "beak",
+        "prot3ct",
+        "insp3ct",
+        "dr0n3",
+        "f0rge",
+        "knit",
+    
+    ],
+    "name1_female_suffixes": ["r", "d", "3d", "er", "d0x", "ker", "k0n", "bot", "dex", "tech"],
+    "name1_male_suffixes": [
+       "er",
+       "0r","@r","ur","1r", "0x", "tr0n", "hu1k", "b0t", "d3x", "t3ch"]
+    ,
+    "name2_col1": [
+        "007",
+        "6",
+        "00",
+        "5",
+        "50",
+        "1",
+        "310",
+        "501",
+        "000001",
+        "612",
+        "2",
+        "5",
+        "3",
+        "45",
+        "1",
+    
+    ],
+
+    "name2_col2": [
+        "-100",
+        "-X",
+        "-LTE",
+        "-XTRA",
+        "-XS",
+        "-XL",
+        "-S399",
+        "-G19",
+        "-A4",
+        "-A35",
+        "-A1",
+        "-1290P",
+        "",
+        "",
+    ],
+
+}
 
 tiefling_data: t.Dict[str, t.List] = {
     "name1_col1": [
