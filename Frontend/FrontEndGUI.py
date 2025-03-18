@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import pprint
+import random
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -18,20 +19,20 @@ import Fantasy_Names
 import Fantasy_Names.human_diverse
 
 
-class DataDogGUIFailSaveWindow(QWidget):
+class ErrorNameSave(QWidget):
     def __init__(self, parent=None):
-        super(DataDogGUIFailSaveWindow, self).__init__(parent)
+        super(ErrorNameSave, self).__init__(parent)
         self.resize(200, 200)
         self.setWindowTitle("Save Failed")
         layout = QVBoxLayout()
-        self.label = QLabel("An Error occurred when trying to export records")
+        self.label = QLabel("Please pick a lineage.")
         layout.addWidget(self.label)
         self.setLayout(layout)
 
 
-class DataDogGUISuccessSaveWindow(QWidget):
+class DataDogGUIFailSaveWindow(QWidget):
     def __init__(self, parent=None):
-        super(DataDogGUISuccessSaveWindow, self).__init__(parent)
+        super(DataDogGUIFailSaveWindow, self).__init__(parent)
         self.resize(200, 200)
         self.setWindowTitle("Successfully Saved!")
         layout = QVBoxLayout()
@@ -66,165 +67,127 @@ class DataDogGUILogWindow(QWidget):
         font.setFamily("Arial")
         font.setPointSize(9)
 
+        # Hero Checkbox
+        self.heroCheck = QCheckBox(self)
+        self.heroCheck.setText("Hero")
+        self.heroCheck.move(8, 20)
+        self.heroCheck.clicked.connect(self.exclusive_checkboxes)
+
         # First Name Label
         firstNameLabel = QLabel(self)
         firstNameLabel.setText("First Name")
         firstNameLabel.setFont(font)
-        firstNameLabel.move(10, 30)
+        firstNameLabel.move(10, 60)
 
         # First Name Entry
         self.firstNameEntry = QLineEdit(self)
         self.firstNameEntry.setFixedWidth(220)
         self.firstNameEntry.setPlaceholderText("Enter First Name here...")
-        self.firstNameEntry.move(75, 25)
+        self.firstNameEntry.move(75, 55)
         self.firstNameEntry.setFocus()
 
         # Last Name Label
         lastNameLabel = QLabel(self)
         lastNameLabel.setText("Last Name")
         lastNameLabel.setFont(font)
-        lastNameLabel.move(10, 55)
+        lastNameLabel.move(10, 87)
 
         # Last Name Entry
-        self.firstNameEntry = QLineEdit(self)
-        self.firstNameEntry.setFixedWidth(220)
-        self.firstNameEntry.setPlaceholderText("Enter Last Name here...")
-        self.firstNameEntry.move(75, 50)
+        self.lastNameEntry = QLineEdit(self)
+        self.lastNameEntry.setFixedWidth(220)
+        self.lastNameEntry.setPlaceholderText("Enter Last Name here...")
+        self.lastNameEntry.move(75, 82)
 
 
+        # lineage Label
+        self.lineageLabel = QLabel(self)
+        self.lineageLabel.setText("Lineage")
+        self.lineageLabel.setFont(font)
+        self.lineageLabel.move(10, 112)
 
-        # Service Label
-        serviceLabel = QLabel(self)
-        serviceLabel.setText("Class")
-        serviceLabel.setFont(font)
-        serviceLabel.move(10, 80)
+        # lineage Combo
+        self.lineageCombo = QComboBox(self)
+        self.lineageCombo.resize(90, 20)
+        for i in lineage_list:
+            self.lineageCombo.addItem(i)
+        self.lineageCombo.move(75, 110)
+      
+
+        # Class Label
+        classLabel = QLabel(self)
+        classLabel.setText("Class")
+        classLabel.setFont(font)
+        classLabel.move(350, 60)
+  
 
         # Class List Combo
-        self.classListChosen = []
-        classList = []
-        self.classCombo = QListWidget(self)
-        self.classCombo.setFixedWidth(220)
-        self.classCombo.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
-        self.classCombo.resize(200, 70)
+        self.classCombo = QComboBox(self)
+        self.classCombo.setFixedWidth(80)
         for i in class_list:
             self.classCombo.addItem(i)
-        self.classCombo.move(75, 80)
+        self.classCombo.move(390, 55)
+        self.classCombo.setDisabled(True)
 
-        # Max Records Label
-        maxRecordsLabel = QLabel(self)
-        maxRecordsLabel.setText("Max Records")
-        maxRecordsLabel.setFont(font)
-        maxRecordsLabel.move(350, 60)
-
-        # Max Records Entry
-        self.maxRecordsEntry = QLineEdit(self)
-        self.maxRecordsEntry.setFixedWidth(220)
-        self.maxRecordsEntry.setPlaceholderText("Enter max number of records here..")
-        self.maxRecordsEntry.setText("10")
-        self.maxRecordsEntry.move(435, 55)
-
-        # Status Label
-        self.statusLabel = QLabel(self)
-        self.statusLabel.setText("Log Status")
-        self.statusLabel.setFont(font)
-        self.statusLabel.move(350, 90)
-
-        # Status Combo
-        self.statusChosen = []
-        self.statusCombo = QListWidget(self)
-        self.statusCombo.setFixedWidth(220)
-        self.statusCombo.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
-        self.statusCombo.resize(100, 70)
-        self.statusCombo.addItem("info")
-        self.statusCombo.addItem("warn")
-        self.statusCombo.addItem("error")
-        self.statusCombo.addItem("debug")
-        self.statusCombo.move(435, 90)
-
-        # Query Checkbox
-        self.queryCheck = QCheckBox(self)
-        self.queryCheck.setText("Query")
-        self.queryCheck.move(8, 210)
-
-        # Disable Query Box
-
-        # Query Multi-line
-        self.queryEntry = QTextEdit(self)
-        self.queryEntry.setFixedWidth(580)
-        self.queryEntry.setFixedHeight(50)
-        self.queryEntry.setDisabled(True)
-        self.queryEntry.move(75, 210)
-
-        # Environment Label
-        envLabel = QLabel(self)
-        envLabel.setText("Environment")
-        envLabel.setFont(font)
-        envLabel.move(350, 30)
-
-        # Environment Combo Box
-        self.envCombo = QComboBox(self)
-        self.envCombo.setFixedWidth(232)
-        self.envCombo.addItem("staging")
-        self.envCombo.addItem("production")
-        self.envCombo.addItem("dev")
-        self.envCombo.move(430, 20)
-
-        # Results Label
-        self.resultsLabel = QLabel(self)
-        self.resultsLabel.setText("Results")
-        self.resultsLabel.setFont(font)
-        self.resultsLabel.move(10, 270)
-
-        # Results Table
-        self.resultTable = QTableWidget(self)
-        self.resultTable.move(75, 270)
-        self.resultTable.resize(580, 350)
-        self.resultTable.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        # Submit Button
-        submitButton = QPushButton(self)
-        submitButton.setText("Submit Query")
-        submitButton.move(420, 655)
-
-        self.exportButton = QPushButton(self)
-        self.exportButton.setText("Export to Txt")
-        self.exportButton.setDisabled(True)
-        self.exportButton.clicked.connect(lambda: self.export_to_txt())
-        self.exportButton.move(547, 655)
-
-        # Next Button
-        self.nextButton = QPushButton(self)
-        self.nextButton.setText("Next")
-        self.nextButton.move(595, 620)
-        self.nextButton.clicked.connect(lambda: self.submit_query())
+        #Generate NPC Button
+        self.generateButton = QPushButton(self)
+        self.generateButton.setText("Generate NPC")
+        self.generateButton.move(10, 200)
+        self.generateButton.clicked.connect(self.generateNPC)
 
         
+    def exclusive_checkboxes(self):
+        if self.heroCheck.isChecked():
+            self.classCombo.setDisabled(False)
+        if self.heroCheck.isChecked() == False:
+            self.classCombo.setDisabled(True)
 
-        # Lat Long Label
-        # self.latLongLabel = QLabel(self)
-        # self.latLongLabel.setFont(font)
-        # self.latLongLabel.setText("Lat/Long Table")
-        # self.latLongLabel.move(10, 550)
+    def generateNPC(self):
+        first_name = self.firstNameEntry.text()
+        last_name = self.lastNameEntry.text()
+        if first_name == "" or last_name == "":
+            self.firstNameEntry.setPlaceholderText("Error! Please enter a valid first name.")
+            self.lastNameEntry.setPlaceholderText("Error! Please enter a valid last name.")
+            return
+        lineage = self.lineageCombo.currentText()
+        if self.heroCheck.isChecked():
+            class_name = self.classCombo.currentText()
+            new_npc = Hero(first_name, last_name, lineage, class_name)
+        else:
+            new_npc = Commoner(first_name, last_name, lineage)
+        
+        hero_profile = {
+            "Name": new_npc.first_name + " " + new_npc.last_name,
+            "Lineage: ": new_npc.lineage}
+        
+        if new_npc.__class__ == Hero:
+            hero_profile["Class"] = new_npc.class_name
+            if new_npc.class_name in ["Wizard", "Sorcerer", "Warlock", "Druid", "Cleric", "Bard", "Ranger", "Paladin"]:
+                spells = getResource.get_spells()
+                spell_results = spells['results']
+                spell_list = []
+                for i in spell_results:
+                    spell_list.append(i['index'])
+                ran_spells = random.sample(spell_list, 3)
+                list_of_spells = {}
+                for i in ran_spells:
+                    name = getResource.get_spells(i)['name']
+                    description = getResource.get_spells(i)['desc']
+                    list_of_spells["Name"] = name
+                    list_of_spells["Description"] = description
+                hero_profile["Spells"] = list_of_spells
 
-        # Lat Long ComboBox
-        # self.latLongCombo = QComboBox(self)
-        # self.latLongCombo.addItem("Lat/Long in JSON")
-        # self.latLongCombo.addItem("Comma Separated Or-Bar")
-        # self.latLongCombo.move(100, 540)
-
-        # Lat Long  Table
-        # self.latLongTable = QTableWidget(self)
-        # self.latLongTable.resize(740, 200)
-        # self.latLongTable.move(10, 575)
-
-
-
-
- 
-
-
-
+        pprint.pprint(hero_profile)
+    
+            
+        
+    def check_list(self, item, list):
+        if item not in list:
+            list.append(item)
+        elif item in list:
+            list.remove(item)
+    
+    
    
-
 
 def main():
     app = QApplication(sys.argv)
