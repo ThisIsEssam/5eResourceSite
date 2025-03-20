@@ -28,7 +28,7 @@ def get_class(class_name=""):
     return ApiHelper.return_json(response)
 
 BACKGROUND_PREFIXES = {
-    "a5e-ag": ["acolyte", "artisan", "charlatan", "criminal", "entertainer", "exile", "farmer", "folk-hero", "gambler",
+    "a5e-ag": ["acolyte", "artisan", "charlatan", "criminal","cultist", "entertainer", "exile", "farmer", "folk-hero", "gambler",
                "guard", "guildmember", "hermit", "marauder", "noble", "outlander", "sage", "sailor", "soldier", "trader",
                "urchin"],
     "a5e-ddg": ["deep-hunter", "dungeon-robber", "escapee-from-below", "imposter"],
