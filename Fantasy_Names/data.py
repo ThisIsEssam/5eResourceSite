@@ -41,7 +41,7 @@ warforged_data: t.Dict[str, t.List] = {
     "name1_female_suffixes": ["r", "d", "3d", "er", "d0x", "ker", "k0n", "bot", "dex", "tech"],
     "name1_male_suffixes": [
        "er",
-       "0r","@r","ur","1r", "0x", "tr0n", "hu1k", "b0t", "d3x", "t3ch"]
+       "0r","@r","ur","1r", "0x", "tr0n", "hu1k", "b0t", "d3x", "t3ch", "OBOT", "0m"]
     ,
     "name2_col1": [
         "007",

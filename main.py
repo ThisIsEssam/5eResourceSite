@@ -128,8 +128,3 @@ def get_random_name(ran_lin):
     
     commoners.append(commoner_profile)
 
-print("Heroes:")
-pprint(heroes)
-
-print("\nCommoners:")
-pprint(commoners)

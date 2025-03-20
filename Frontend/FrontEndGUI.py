@@ -2,12 +2,9 @@
 import datetime
 import json
 import os
-import pprint
+from pathlib import Path
 import random
 import sys
-
-
-
 
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -16,11 +13,15 @@ import pytz
 import requests
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import *
+from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtGui import QMovie
 from Backend.NPC_Class.Hero import Hero
 from Backend.NPC_Class.Commoner import Commoner
 from Backend.API import getResource
-import Fantasy_Names
+from Backend.LLM.LLM_Worker import LLMWorker
 import Fantasy_Names.human_diverse
+from Backend.LLM.LLM_Class import get_llm_response  
+from Fantasy_Names.NameGenerator import get_random_name
 
 
 class ErrorNameSave(QWidget):
@@ -63,7 +64,7 @@ class NPCCreatorWindow(QWidget):
         self.saveWindowSuccess = None
         self.saveWindowFail = None
         self.resize(700, 700)
-        self.setFixedSize(700, 700)
+        self.setFixedSize(700, 650)
         self.setWindowTitle("D&D Character Tool")
 
         # Font
@@ -218,6 +219,29 @@ class NPCCreatorWindow(QWidget):
         self.lineageLock.clicked.connect(self.lock_element)
         self.firstNameLock.clicked.connect(self.lock_element)
 
+        self.loadingLabel = QLabel(self)
+        loading_gif_path = os.path.join(Path(__file__).parent.parent, "Images", "loading.gif")
+        self.loadingMovie = QMovie(loading_gif_path)
+
+        # Set the size of the label to match the GIF size
+        self.loadingMovie.start()
+        gif_size = self.loadingMovie.currentPixmap().size()
+        self.loadingLabel.setFixedSize(gif_size)
+        self.loadingLabel.setMovie(self.loadingMovie)
+        self.loadingLabel.setVisible(False)  # Initially hidden
+
+        # Center the loading label
+        self.center_loading_label()
+
+        # Connect the resize event to re-center the loading label
+        self.resizeEvent = self.on_resize
+        
+
+        self.lineEdit = QTextEdit(self)
+        self.lineEdit.move(10, 200)
+        self.lineEdit.setFixedSize(680 ,400)
+        self.lineEdit.setReadOnly(True)
+
         # Create a mapping between checkboxes and their associated elements
         self.lock_mapping = {
             self.firstNameLock: self.firstNameEntry,
@@ -231,6 +255,16 @@ class NPCCreatorWindow(QWidget):
         # Connect all checkboxes to the lock_element method
         for checkbox in self.lock_mapping.keys():
             checkbox.clicked.connect(self.lock_element)
+    
+    def center_loading_label(self):
+       
+        x = (self.width() - self.loadingLabel.width()) // 2
+        y = (self.height() - self.loadingLabel.height()) // 2
+        self.loadingLabel.move(x, y)
+
+    def on_resize(self, event):
+        self.center_loading_label()
+        super().resizeEvent(event)        
 
     def exclusive_checkboxes(self):
         if self.heroCheck.isChecked():
@@ -266,7 +300,7 @@ class NPCCreatorWindow(QWidget):
         
         hero_profile = {
             "Name": new_npc.first_name + " " + new_npc.last_name,
-            "Lineage: ": new_npc.lineage}
+            "Lineage": new_npc.lineage}
         
         if new_npc.__class__== Hero:
             hero_profile["Class"] = new_npc.class_name
@@ -298,41 +332,19 @@ class NPCCreatorWindow(QWidget):
                     list_of_spells["Level"] = level
                     list_of_spells["Name"] = name
                     list_of_spells["Description"] = description
-                    hero_profile["Spells"].append(list_of_spells) 
-        pprint.pprint(hero_profile)
-
-    def get_random_name(self, ran_lin):
-        if ran_lin.lower() == "dwarf":
-            name = Fantasy_Names.dwarf()
-        elif ran_lin.lower() == "dragonborn":
-            name = Fantasy_Names.dragonborn()
-        elif ran_lin.lower() == "elf":
-            name = Fantasy_Names.elf()
-        elif ran_lin.lower() == "gnome":
-            name = Fantasy_Names.gnome()
-        elif ran_lin.lower() == "half-elf":
-            first_names = Fantasy_Names.human().split(" ")
-            last_names = Fantasy_Names.elf().split(" ")
-            name = random.choice(first_names) + " " + random.choice(last_names)
-        elif ran_lin.lower() == "half-orc":
-            first_names = Fantasy_Names.human().split(" ")
-            last_names = Fantasy_Names.orc().split(" ")
-            name = random.choice(first_names) + " " + random.choice(last_names)
-        elif ran_lin.lower() == "orc":
-            name = Fantasy_Names.orc()
-        elif ran_lin.lower() == "halfling":
-            name = Fantasy_Names.hobbit()
-        elif ran_lin.lower() == "human":
-            name = Fantasy_Names.human_diverse.human()
-        elif ran_lin.lower() == "tiefling":
-            name = Fantasy_Names.tiefling()
-        elif ran_lin.lower() == "warforged":
-            name = Fantasy_Names.warforged()
+                    hero_profile["Spells"].append(list_of_spells)
+        prompt = "Role play in the first person as a D&D "+ new_npc.lineage+" NPC named "+new_npc.first_name+" "+new_npc.last_name+"."
+        if new_npc.__class__ == Hero:
+           prompt += " You are a level "+ hero_profile["Level"]+" "+hero_profile["Class"]+" with a "+hero_profile["Background"]["Background"]+" background. "+ hero_profile["Background"]["Description"]+" Start with a very brief and unique description of what you look like (no more than 20 words) before going into first-person dialogue (no more than 50-80 words). Add verbal quirks based on your lineage."
         
-        hero_first_name = name.split(" ")[0]
-        hero_last_name = name.split(" ")[1]
+        self.loadingLabel.raise_()
+        self.loadingLabel.setVisible(True)
+        self.loadingMovie.start()
+        self.worker = LLMWorker(prompt)
+        self.worker.finished.connect(self.on_llm_response)
+        self.worker.error.connect(self.on_llm_error)
+        self.worker.start()
         
-        return hero_first_name, hero_last_name
     
     def highest_spell_slot(self, character_class, level):
     # Define spell slot progression based on class type
@@ -366,6 +378,22 @@ class NPCCreatorWindow(QWidget):
         elif item in list:
             list.remove(item)
     
+    def on_llm_response(self, response):
+    # Hide the loading indicator
+        self.loadingMovie.stop()
+        self.loadingLabel.setVisible(False)
+
+    # Display the response in the QTextEdit widget
+        self.lineEdit.setPlainText(response)
+
+    def on_llm_error(self, error_message):
+    # Hide the loading indicator
+        self.loadingMovie.stop()
+        self.loadingLabel.setVisible(False)
+
+    # Display the error message
+        self.lineEdit.setPlainText(f"Error: {error_message}")
+    
     def randomizeNPC(self):
        if self.heroCheck.isChecked():
            if self.classCombo.isEnabled():
@@ -377,7 +405,7 @@ class NPCCreatorWindow(QWidget):
        if self.lineageCombo.isEnabled():
         self.lineageCombo.setCurrentIndex(random.randint(0, self.lineageCombo.count() - 1))
        lineage = self.lineageCombo.currentText()
-       first_name, last_name = self.get_random_name(lineage)
+       first_name, last_name = get_random_name(lineage)
        if self.firstNameEntry.isEnabled():
         self.firstNameEntry.setText(first_name)
        if self.lastNameEntry.isEnabled():
