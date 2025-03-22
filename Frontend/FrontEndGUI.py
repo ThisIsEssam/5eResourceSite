@@ -20,7 +20,6 @@ from Backend.NPC_Class.Commoner import Commoner
 from Backend.API import getResource
 from Backend.LLM.LLM_Worker import LLMWorker
 import Fantasy_Names.human_diverse
-from Backend.LLM.LLM_Class import get_llm_response  
 from Fantasy_Names.NameGenerator import get_random_name
 
 
@@ -54,6 +53,7 @@ class NPCCreatorWindow(QWidget):
         lineage_results = lineages['results']
         class_list = []
         lineage_list = []
+        self.chat_history = []
         for i in class_results:
             class_list.append(i['name'])
 
@@ -239,8 +239,17 @@ class NPCCreatorWindow(QWidget):
 
         self.lineEdit = QTextEdit(self)
         self.lineEdit.move(10, 200)
-        self.lineEdit.setFixedSize(680 ,400)
+        self.lineEdit.setFixedSize(680,300)
         self.lineEdit.setReadOnly(True)
+
+        self.entryBox = QLineEdit(self)
+        self.entryBox.setFixedWidth(610)
+        self.entryBox.move(10, 510)
+
+        self.sendButton = QPushButton(self)
+        self.sendButton.setText("Send")
+        self.sendButton.clicked.connect(self.send_response)
+        self.sendButton.move(620, 509)
 
         # Create a mapping between checkboxes and their associated elements
         self.lock_mapping = {
@@ -340,7 +349,7 @@ class NPCCreatorWindow(QWidget):
         self.loadingLabel.raise_()
         self.loadingLabel.setVisible(True)
         self.loadingMovie.start()
-        self.worker = LLMWorker(prompt)
+        self.worker = LLMWorker(prompt, self.chat_history)
         self.worker.finished.connect(self.on_llm_response)
         self.worker.error.connect(self.on_llm_error)
         self.worker.start()
@@ -378,13 +387,32 @@ class NPCCreatorWindow(QWidget):
         elif item in list:
             list.remove(item)
     
+    def send_response(self):
+        user_input = self.entryBox.text().strip()
+        if not user_input:
+            return 
+        self.entryBox.clear()
+        self.chat_history.append({"role": "user", "content": user_input})
+        self.update_chat_display()  # Update display with the user's message
+        self.loadingLabel.raise_()
+        self.loadingLabel.setVisible(True)
+        self.loadingMovie.start()
+        self.worker = LLMWorker(user_input, self.chat_history)
+        self.worker.finished.connect(self.on_llm_response)
+        self.worker.error.connect(self.on_llm_error)
+        self.worker.start()
+
     def on_llm_response(self, response):
-    # Hide the loading indicator
+        # Hide the loading indicator
         self.loadingMovie.stop()
         self.loadingLabel.setVisible(False)
 
-    # Display the response in the QTextEdit widget
-        self.lineEdit.setPlainText(response)
+        # Append the assistant's response to the chat history
+        self.chat_history.append({"role": "assistant", "content": response})
+
+        # Update the display with the most recent messages
+        self.update_chat_display()
+
 
     def on_llm_error(self, error_message):
     # Hide the loading indicator
@@ -393,6 +421,16 @@ class NPCCreatorWindow(QWidget):
 
     # Display the error message
         self.lineEdit.setPlainText(f"Error: {error_message}")
+    
+    def update_chat_display(self):
+        if len(self.chat_history) >= 2:
+            last_user_message = self.chat_history[-2]  # Second-to-last message (user)
+            last_assistant_message = self.chat_history[-1]  # Last message (assistant)
+
+        if last_user_message["role"] == "user":
+            self.lineEdit.append(f"<b>User:</b> {last_user_message['content']}")
+        if last_assistant_message["role"] == "assistant":
+            self.lineEdit.append(f"<b>Assistant:</b> {last_assistant_message['content']}")
     
     def randomizeNPC(self):
        if self.heroCheck.isChecked():
@@ -420,6 +458,14 @@ class NPCCreatorWindow(QWidget):
                 element.setEnabled(self.heroCheck.isChecked() and checkbox.isChecked())
             else:
                 element.setEnabled(checkbox.isChecked())
+    
+    def view_full_history(self):
+        self.lineEdit.clear()
+        for message in self.chat_history:
+            if message["role"] == "user":
+                self.lineEdit.append(f"<b>User:</b> {message['content']}")
+            elif message["role"] == "assistant":
+                self.lineEdit.append(f"<b>Assistant:</b> {message['content']}")
        
      
 
