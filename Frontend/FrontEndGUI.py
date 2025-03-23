@@ -392,8 +392,8 @@ class NPCCreatorWindow(QWidget):
         if not user_input:
             return 
         self.entryBox.clear()
-        self.chat_history.append({"role": "user", "content": user_input})
         self.update_chat_display()  # Update display with the user's message
+
         self.loadingLabel.raise_()
         self.loadingLabel.setVisible(True)
         self.loadingMovie.start()
@@ -406,9 +406,6 @@ class NPCCreatorWindow(QWidget):
         # Hide the loading indicator
         self.loadingMovie.stop()
         self.loadingLabel.setVisible(False)
-
-        # Append the assistant's response to the chat history
-        self.chat_history.append({"role": "assistant", "content": response})
 
         # Update the display with the most recent messages
         self.update_chat_display()
@@ -423,14 +420,24 @@ class NPCCreatorWindow(QWidget):
         self.lineEdit.setPlainText(f"Error: {error_message}")
     
     def update_chat_display(self):
-        if len(self.chat_history) >= 2:
-            last_user_message = self.chat_history[-2]  # Second-to-last message (user)
-            last_assistant_message = self.chat_history[-1]  # Last message (assistant)
+    # Clear the display
+        self.lineEdit.clear()
 
-        if last_user_message["role"] == "user":
-            self.lineEdit.append(f"<b>User:</b> {last_user_message['content']}")
-        if last_assistant_message["role"] == "assistant":
-            self.lineEdit.append(f"<b>Assistant:</b> {last_assistant_message['content']}")
+        # Iterate through the chat history
+        for index, message in enumerate(self.chat_history):
+            # Skip the first message if it's the prompt
+            if "Role play in the first person as a D&D" in message["content"]:
+                continue
+
+            # Format and display user messages
+            if message["role"] == "user":
+                self.lineEdit.append(f"<div style='text-align: right; color: red;'><b>User:</b> {message['content']}</div>")
+            # Format and display assistant messages
+            elif message["role"] == "assistant":
+                self.lineEdit.append(f"<div style='text-align: left; color: green;'><b>Assistant:</b> {message['content']}</div>")
+
+        # Scroll to the bottom of the chat
+        self.lineEdit.verticalScrollBar().setValue(self.lineEdit.verticalScrollBar().maximum())
     
     def randomizeNPC(self):
        if self.heroCheck.isChecked():
