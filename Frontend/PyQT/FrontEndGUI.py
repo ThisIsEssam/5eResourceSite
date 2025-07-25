@@ -344,7 +344,7 @@ class NPCCreatorWindow(QWidget):
                     hero_profile["Spells"].append(list_of_spells)
         prompt = "Role play in the first person as a D&D "+ new_npc.lineage+" NPC named "+new_npc.first_name+" "+new_npc.last_name+"."
         if new_npc.__class__ == Hero:
-           prompt += " You are a level "+ hero_profile["Level"]+" "+hero_profile["Class"]+" with a "+hero_profile["Background"]["Background"]+" background. "+ hero_profile["Background"]["Description"]+" Start with a very brief and unique description of what you look like (no more than 20 words) before going into first-person dialogue (no more than 50-80 words). Add verbal quirks based on your lineage."
+           prompt += " You are a level "+ hero_profile["Level"]+" "+hero_profile["Class"]+" with a "+hero_profile["Background"]["Background"]+" background. "+ hero_profile["Background"]["Description"]+" Add verbal quirks based on your character's attributes and describe your appearance. Keep your responses to 80-100 words."
         
         self.loadingLabel.raise_()
         self.loadingLabel.setVisible(True)
