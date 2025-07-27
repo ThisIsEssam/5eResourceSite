@@ -3,7 +3,7 @@ from pprint import pprint
 from functools import lru_cache
 import json
 import os
-from Backend.API.APIHelper import ApiHelper
+from APIHelper import ApiHelper 
 
 @lru_cache(maxsize=128)
 def get_spells(spell=""):
@@ -27,6 +27,16 @@ def get_class(class_name=""):
                                  expected_status_code=200)
     return ApiHelper.return_json(response)
 
+
+
+
+file_path = os.path.join(os.path.dirname(__file__), "backgrounds.json")
+with open(file_path, "r") as f:
+    BACKGROUND_DESCRIPTIONS = json.load(f)
+
+def get_background_description(background):
+    return BACKGROUND_DESCRIPTIONS.get(background, "No description available.")
+
 BACKGROUND_PREFIXES = {
     "a5e-ag": ["acolyte", "artisan", "charlatan", "criminal","cultist", "entertainer", "exile", "farmer", "folk-hero", "gambler",
                "guard", "guildmember", "hermit", "marauder", "noble", "outlander", "sage", "sailor", "soldier", "trader",
@@ -38,22 +48,13 @@ BACKGROUND_PREFIXES = {
             "gamekeeper", "innkeeper", "mercenary-company-scion", "mercenary-recruit", "monstrous-adoptee",
             "mysterious-origins", "northern-minstrel", "occultist", "parfumier", "scoundrel", "sentry", "trophy-hunter"]
 }
-
-
-file_path = os.path.join(os.path.dirname(__file__), "backgrounds.json")
-with open(file_path, "r") as f:
-    BACKGROUND_DESCRIPTIONS = json.load(f)
-
-def get_background_description(background):
-    return BACKGROUND_DESCRIPTIONS.get(background, "No description available.")
-
 def get_backgrounds(background=""):
+    background = background.lower().replace(" ", "-")
     background_plus = background
     for prefix, backgrounds in BACKGROUND_PREFIXES.items():
         if background in backgrounds:
             background_plus = f"{prefix}_{background}"
             break
-
     response = ApiHelper.request("GET", payload="",
                                  headers="", url="https://api.open5e.com/v2/backgrounds/" + background_plus,
                                  expected_status_code=200)

@@ -11,7 +11,7 @@ function NPCCreator() {
     const [lastNameLock, setLastNameLock] = useState(false);
 
     const [lineage, setLineage] = useState("");
-    const [lineageLock, setLineageLock] = useState(true);
+    const [lineageLock, setLineageLock] = useState(false);
 
     const [className, setClassName] = useState("");
     const [classLock, setClassLock] = useState(true);
@@ -28,6 +28,18 @@ function NPCCreator() {
 
     const [loading, setLoading] = useState(false);
 
+    const BACKGROUND_PREFIXES = {
+    "a5e-ag": ["acolyte", "artisan", "charlatan", "criminal","cultist", "entertainer", "exile", "farmer", "folk-hero", "gambler",
+               "guard", "guildmember", "hermit", "marauder", "noble", "outlander", "sage", "sailor", "soldier", "trader",
+               "urchin"],
+    "a5e-ddg": ["deep-hunter", "dungeon-robber", "escapee-from-below", "imposter"],
+    "a5e-gpg": ["cursed", "haunted"],
+    "tdcs": ["crime-syndicate-member", "elemental-warden", "fate-touched", "lyceum-student", "recovered-cultist"],
+    "toh": ["desert-runner", "court-servant", "destined", "diplomat", "forest-dweller", "former-adventurer", "freebooter",
+            "gamekeeper", "innkeeper", "mercenary-company-scion", "mercenary-recruit", "monstrous-adoptee",
+            "mysterious-origins", "northern-minstrel", "occultist", "parfumier", "scoundrel", "sentry", "trophy-hunter"]
+}
+
   useEffect(() => {
   async function fetchData() {
     try {
@@ -40,9 +52,14 @@ function NPCCreator() {
       const classesJson = await classesRes.json();
       setClasses(classesJson.results.map((c) => c.name));
 
-      const backgroundsRes = await fetch("https://api.open5e.com/v2/backgrounds/");
+      const backgroundsRes = await fetch("http://localhost:5000/api/backgrounds");
       const backgroundsJson = await backgroundsRes.json();
-      setBackgrounds(backgroundsJson.results.map((b) => b.name));
+      const backgrounds = backgroundsJson.results?.map((b) => ({
+    name: b.name,
+    description: b.description
+  })) || [];
+      setBackgrounds(backgrounds);
+      
     } catch (error) {
       console.error("Failed to load dropdown data", error);
     }
@@ -60,8 +77,6 @@ function NPCCreator() {
     setBackgroundLock(true);
   }
 }, [heroChecked]);
-
-
 
 
   function generateNameByLineage(lineage, gender, subtype="Anglo") {
@@ -105,18 +120,30 @@ function NPCCreator() {
 
   const generateNPC = async () => {
     
+    
   };
 
   const randomizeNPC = () => {
+    const chosenLineage = lineageLock && lineage ? lineage : getRandomItem(lineages);
+    if (!lineageLock) setLineage(chosenLineage);
+    if (!classLock) setClassName(getRandomItem(classes));
+    const randomBackground = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+    try{
+    const newBackground = fetch(`http://localhost:5000/api/backgrounds?background=${(randomBackground.name)}`)
+    setBackground(newBackground);
+    if (!backgroundLock) setBackground(newBackground.name);
+    }
+    catch(error){
+      console.error("Failed to fetch background details:", error);
+    }
     if (!firstNameLock || !lastNameLock) {
       const gender = Math.random() < 0.5 ? "male" : "female";
-      const chosenLineage = lineageLock && lineage ? lineage : getRandomItem(lineages);
       const { firstName, lastName } = generateNameByLineage(chosenLineage, gender);
-
       if (!firstNameLock) setFirstName(firstName);
       if (!lastNameLock) setLastName(lastName);
-      if (!lineageLock) setLineage(chosenLineage);
+      
     }
+
   };
 
   return (
@@ -150,17 +177,16 @@ function NPCCreator() {
         <label>
           Last Name
           <input
-          type="text"
-          value={lastName}
-          disabled={lastNameLock}
-          onChange={e => setLastNameLock(e.target.checked)}
-           />
-           <input
-           type="checkbox"
-           checked={lastNameLock}
-           onChange={e =>setLastNameLock(e.target.checked)}>
-           </input>
-           Lock
+            type="text"
+            value={lastName}
+            disabled={lastNameLock}
+            onChange={e => setLastName(e.target.value)}
+          />
+          <input
+            type="checkbox"
+            checked={lastNameLock}
+            onChange={e => setLastNameLock(e.target.checked)}
+          /> Lock
         </label>
 
       </div>
@@ -171,7 +197,6 @@ function NPCCreator() {
       disabled={lineageLock}
       onChange={e => setLineage(e.target.value)}
     >
-      <option value="">-- Select a lineage --</option>
       {lineages.map((l, idx) => (
         <option key={idx} value={l}>
           {l}
@@ -183,6 +208,44 @@ function NPCCreator() {
       checked={lineageLock}
       onChange={e => setLineageLock(e.target.checked)}
     /> Lock
+      </div>
+      <div>
+        <label>Class
+          <select
+          value={className}
+          disabled={!heroChecked || classLock}
+          onChange={e => setClassName(e.target.value)}>
+      {classes.map((l, idx) => (
+        <option key={idx} value={l}>
+          {l}
+        </option>
+      ))}
+          </select>
+          <input
+          type="checkbox"
+          checked={classLock}
+          onChange ={e => setClassLock(e.target.checked)}/>Lock
+        </label>
+      </div>
+      <div>
+        <label>
+          Background
+          <select
+          value={background}
+          disabled={!heroChecked || backgroundLock}
+          onChange={e => setBackground(e.target.value)}>
+              {backgrounds.map((b, idx) => (
+            <option key={idx} value={b.name}>
+              {b.name}
+            </option>
+          ))}
+          </select>
+        </label>
+        <input
+        type="checkbox"
+        checked={backgroundLock}
+        onChange={e => setBackgroundLock(e.target.checked)}/>
+        Lock
       </div>
       <button onClick={generateNPC}>Generate NPC</button>
       <button onClick={randomizeNPC}>Randomize NPC</button>
