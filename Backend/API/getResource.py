@@ -35,6 +35,7 @@ with open(file_path, "r") as f:
     BACKGROUND_DESCRIPTIONS = json.load(f)
 
 def get_background_description(background):
+    print("GETTING BACKGROUND")
     return BACKGROUND_DESCRIPTIONS.get(background, "No description available.")
 
 BACKGROUND_PREFIXES = {
@@ -51,7 +52,7 @@ BACKGROUND_PREFIXES = {
 def get_backgrounds(background=""):
     background = background.lower().replace(" ", "-")
     background_plus = background
-    for prefix, backgrounds in BACKGROUND_PREFIXES.items():
+    for prefix, backgrounds in BACKGROUND_PREFIXES.items():         
         if background in backgrounds:
             background_plus = f"{prefix}_{background}"
             break
@@ -62,7 +63,9 @@ def get_backgrounds(background=""):
         return ApiHelper.return_json(response)
 
     response_json = response.json()
-    if response_json.get("desc") == "[No description provided]":
+    description = response_json["desc"]
+    if "[No description provided]" in description:
+        print("GETTING DESCRIPTION")
         response_json["desc"] = get_background_description(background)
     return response_json
 

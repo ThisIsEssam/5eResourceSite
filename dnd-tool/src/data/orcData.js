@@ -18,7 +18,7 @@ export const orcData = {
         "snegg",
         "thrash",
     ],
-    "name1_female_suffixes": ["ul", "*tha", "lash", "elch", "tharax", "szhah", "holob", "*ungina", "lara"],
+    "name1_female_suffixes": ["ul", "*tha", "lash", "elch", "tharax", "szhah", "holob", "ungina", "lara"],
     "name1_male_suffixes": [
         "glarz",
         "zug",

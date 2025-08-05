@@ -1,4 +1,3 @@
-// src/utils/angloName.js
 import { orcData } from '../data/orcData';
 
 function randomItem(arr) {
@@ -9,33 +8,41 @@ function maybe(probabilityPercent) {
   return Math.random() * 100 < probabilityPercent;
 }
 
+function applyTransformation(str, transformations) {
+  let result = str;
+  transformations.forEach(trans => {
+    const { input, outputs } = trans;
+    const regex = new RegExp(input, 'g');
+    result = result.replace(regex, () => {
+      return outputs[Math.floor(Math.random() * outputs.length)];
+    });
+  });
+  return result;
+}
+
 export function generateFirstName(gender) {
   const col1 = randomItem(orcData.name1_col1);
+  let name;
 
   if (gender === "male") {
     if (maybe(50)) {
-      // name1_col1 + name1_col2
-      return col1 + randomItem(orcData.name1_col2);
+      name = col1 + randomItem(orcData.name1_col2);
     } else {
-      // name1_col1 + male suffix
-      return col1 + randomItem(orcData.name1_male_suffixes);
+      name = col1 + randomItem(orcData.name1_male_suffixes);
     }
-  }
-
-  if (gender === "female") {
+  } else if (gender === "female") {
     if (maybe(50)) {
-      // name1_col1 + female suffix
-      return col1 + randomItem(orcData.name1_female_suffixes);
+      name = col1 + randomItem(orcData.name1_female_suffixes);
     } else {
-      // name1_col1 + name1_col2 + female suffix
       const col2 = randomItem(orcData.name1_col2);
       const suffix = randomItem(orcData.name1_female_suffixes);
-      return col1 + col2 + suffix;
+      name = col1 + col2 + suffix;
     }
+  } else {
+    name = col1;
   }
 
-  // fallback if gender is unspecified or invalid
-  return col1;
+  return applyTransformation(name, orcData.transformations);
 }
 
 export function generateLastName() {
@@ -43,7 +50,9 @@ export function generateLastName() {
   const col2 = randomItem(orcData.name2_col2);
   const base = col1 + col2;
 
-  return maybe(50) ? `of ${base}` : base;
+  const transformedBase = applyTransformation(base, orcData.transformations);
+
+  return maybe(50) ? `of ${transformedBase}` : transformedBase;
 }
 
 export function generateOrcName(gender = "male") {

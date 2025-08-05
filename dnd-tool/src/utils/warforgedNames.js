@@ -43,7 +43,7 @@ function generateLastName() {
   const col2 = randomItem(warforgedData.name2_col2);
   const base = col1 + col2;
 
-  return maybe(50) ? `of ${base}` : base;
+  return maybe(50) ? `${base}` : base;
 }
 
 export function generateWarforgedName(gender = "male") {

@@ -19,7 +19,7 @@ function NPCCreator() {
     const [level, setLevel] = useState("1");
     const [levelLock, setLevelLock] = useState(true);
 
-    const [background, setBackground] = useState("");
+    const [background, setBackground] = useState({});
     const [backgroundLock, setBackgroundLock] = useState(true);
 
     const [lineages, setLineages] = useState([]);
@@ -28,17 +28,7 @@ function NPCCreator() {
 
     const [loading, setLoading] = useState(false);
 
-    const BACKGROUND_PREFIXES = {
-    "a5e-ag": ["acolyte", "artisan", "charlatan", "criminal","cultist", "entertainer", "exile", "farmer", "folk-hero", "gambler",
-               "guard", "guildmember", "hermit", "marauder", "noble", "outlander", "sage", "sailor", "soldier", "trader",
-               "urchin"],
-    "a5e-ddg": ["deep-hunter", "dungeon-robber", "escapee-from-below", "imposter"],
-    "a5e-gpg": ["cursed", "haunted"],
-    "tdcs": ["crime-syndicate-member", "elemental-warden", "fate-touched", "lyceum-student", "recovered-cultist"],
-    "toh": ["desert-runner", "court-servant", "destined", "diplomat", "forest-dweller", "former-adventurer", "freebooter",
-            "gamekeeper", "innkeeper", "mercenary-company-scion", "mercenary-recruit", "monstrous-adoptee",
-            "mysterious-origins", "northern-minstrel", "occultist", "parfumier", "scoundrel", "sentry", "trophy-hunter"]
-}
+    
 
   useEffect(() => {
   async function fetchData() {
@@ -52,14 +42,10 @@ function NPCCreator() {
       const classesJson = await classesRes.json();
       setClasses(classesJson.results.map((c) => c.name));
 
-      const backgroundsRes = await fetch("http://localhost:5000/api/backgrounds");
+      const backgroundsRes = await fetch("https://api.open5e.com/v2/backgrounds");
       const backgroundsJson = await backgroundsRes.json();
-      const backgrounds = backgroundsJson.results?.map((b) => ({
-    name: b.name,
-    description: b.description
-  })) || [];
-      setBackgrounds(backgrounds);
-      
+      setBackgrounds(backgroundsJson.results || []);
+
     } catch (error) {
       console.error("Failed to load dropdown data", error);
     }
@@ -71,10 +57,14 @@ function NPCCreator() {
     setClassLock(false);
     setLevelLock(false);
     setBackgroundLock(false);
+    
   } else {
     setClassLock(true);
     setLevelLock(true);
     setBackgroundLock(true);
+    setClassName("");
+    setLevel("1");
+    setBackground({ name: "", desc: "" });
   }
 }, [heroChecked]);
 
@@ -119,31 +109,70 @@ function NPCCreator() {
 
 
   const generateNPC = async () => {
-    
-    
-  };
+     try {
+    let backgroundData = background;
 
-  const randomizeNPC = () => {
-    const chosenLineage = lineageLock && lineage ? lineage : getRandomItem(lineages);
-    if (!lineageLock) setLineage(chosenLineage);
-    if (!classLock) setClassName(getRandomItem(classes));
-    const randomBackground = backgrounds[Math.floor(Math.random() * backgrounds.length)];
-    try{
-    const newBackground = fetch(`http://localhost:5000/api/backgrounds?background=${(randomBackground.name)}`)
-    setBackground(newBackground);
-    if (!backgroundLock) setBackground(newBackground.name);
+    if (heroChecked && background?.name) {
+      const bgResponse = await fetch(
+        `http://localhost:5000/api/backgrounds?background=${encodeURIComponent(background.name)}`
+      );
+
+      if (!bgResponse.ok) throw new Error(`Failed to fetch background: ${bgResponse.statusText}`);
+      backgroundData = await bgResponse.json();
+      setBackground(backgroundData); 
     }
-    catch(error){
-      console.error("Failed to fetch background details:", error);
+    else{
+      setBackground({name:"", desc: "No description available"})
+      setClassName("")
     }
-    if (!firstNameLock || !lastNameLock) {
-      const gender = Math.random() < 0.5 ? "male" : "female";
-      const { firstName, lastName } = generateNameByLineage(chosenLineage, gender);
-      if (!firstNameLock) setFirstName(firstName);
-      if (!lastNameLock) setLastName(lastName);
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    const npc = {
+      name: fullName,
+      race: lineage,
+      class: className,
+      level: level,
+      background: backgroundData.name,
+      description: backgroundData.desc,
+      isHero: heroChecked,
+    };
+
+    console.log("Generated NPC:", npc);
+  } catch (error) {
+    console.error("Error generating NPC:", error);
+  }
+};
+
+  const randomizeNPC = async () => {
+    setLoading(true);
+    try {
+      const chosenLineage = lineageLock && lineage ? lineage : getRandomItem(lineages);
+      if (!lineageLock) setLineage(chosenLineage);
+
+      if (!classLock) setClassName(getRandomItem(classes));
+
+      if (!firstNameLock || !lastNameLock) {
+        const gender = Math.random() < 0.5 ? "male" : "female";
+        const { firstName, lastName } = generateNameByLineage(chosenLineage, gender);
+        if (!firstNameLock) setFirstName(firstName);
+        if (!lastNameLock) setLastName(lastName);
+      }
+
+      if (!backgroundLock && backgrounds.length > 0) {
+        const randomBackground = getRandomItem(backgrounds);
+        const bgResponse = await fetch(`http://localhost:5000/api/backgrounds?background=${encodeURIComponent(randomBackground.name)}`);
+        if (!bgResponse.ok) throw new Error(`Failed fetching background details: ${bgResponse.statusText}`);
+        const bgDetail = await bgResponse.json();
+        setBackground(bgDetail);
+      }
+
       
+    } catch (error) {
+      console.error("Error during NPC randomization:", error);
+    } finally {
+      setLoading(false);
     }
-
   };
 
   return (
@@ -231,13 +260,16 @@ function NPCCreator() {
         <label>
           Background
           <select
-          value={background}
+          value={background.name || ""}
           disabled={!heroChecked || backgroundLock}
-          onChange={e => setBackground(e.target.value)}>
+           onChange={e => {
+      const selected = backgrounds.find(b => b.name === e.target.value);
+      setBackground(selected);
+    }}>
               {backgrounds.map((b, idx) => (
-            <option key={idx} value={b.name}>
-              {b.name}
-            </option>
+      <option key={idx} value={b.name}>
+        {b.name}
+      </option>
           ))}
           </select>
         </label>
@@ -249,9 +281,17 @@ function NPCCreator() {
       </div>
       <button onClick={generateNPC}>Generate NPC</button>
       <button onClick={randomizeNPC}>Randomize NPC</button>
+      <div>
+        <textarea
+      rows="5"
+      cols="40">
 
-      {loading && <div>Loading spinner or animation here...</div>}
+      </textarea>
+
+      </div>
+      {loading && <div>Randomizing NPC...</div>}
     </div>
+    
   );
 }
 
