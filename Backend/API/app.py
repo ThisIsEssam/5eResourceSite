@@ -1,8 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from getResource import get_backgrounds 
-from LLM import LLM_Class, LLM_Worker
-
+from LLM_Worker import get_llm_response
 app = Flask(__name__)
 CORS(app)
 @app.route('/api/backgrounds', methods=['GET'])
@@ -21,7 +20,7 @@ def llm():
         if not prompt:
             return jsonify({"error": "Prompt is required"}), 400
 
-        response, updated_chat_history = LLM_Worker.get_llm_response(prompt, chat_history)
+        response, updated_chat_history = get_llm_response(prompt, chat_history)
         return jsonify({
             "response": response,
             "chat_history": updated_chat_history

@@ -47,7 +47,8 @@ BACKGROUND_PREFIXES = {
     "tdcs": ["crime-syndicate-member", "elemental-warden", "fate-touched", "lyceum-student", "recovered-cultist"],
     "toh": ["desert-runner", "court-servant", "destined", "diplomat", "forest-dweller", "former-adventurer", "freebooter",
             "gamekeeper", "innkeeper", "mercenary-company-scion", "mercenary-recruit", "monstrous-adoptee",
-            "mysterious-origins", "northern-minstrel", "occultist", "parfumier", "scoundrel", "sentry", "trophy-hunter"]
+            "mysterious-origins", "northern-minstrel", "occultist", "parfumier", "sentry", "trophy-hunter"],
+    "open5e":["scoundrel", "con-artist"]
 }
 def get_backgrounds(background=""):
     background = background.lower().replace(" ", "-")
