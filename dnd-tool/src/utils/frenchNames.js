@@ -1,4 +1,3 @@
-// src/utils/angloName.js
 import { frenchData } from "../data/frenchData";
 
 function randomItem(arr) {
@@ -9,33 +8,40 @@ function maybe(probabilityPercent) {
   return Math.random() * 100 < probabilityPercent;
 }
 
+// Add this function to apply transformations
+function applyTransformation(str, transformations) {
+  let result = str;
+  transformations.forEach(({ input, outputs }) => {
+    const regex = new RegExp(input, 'g');
+    result = result.replace(regex, () => randomItem(outputs));
+  });
+  return result;
+}
+
 function generateFirstName(gender) {
   const col1 = randomItem(frenchData.name1_col1);
 
+  let name;
   if (gender === "male") {
     if (maybe(50)) {
-      // name1_col1 + name1_col2
-      return col1 + randomItem(frenchData.name1_col2);
+      name = col1 + randomItem(frenchData.name1_col2);
     } else {
-      // name1_col1 + male suffix
-      return col1 + randomItem(frenchData.name1_male_suffixes);
+      name = col1 + randomItem(frenchData.name1_male_suffixes);
     }
-  }
-
-  if (gender === "female") {
+  } else if (gender === "female") {
     if (maybe(50)) {
-      // name1_col1 + female suffix
-      return col1 + randomItem(frenchData.name1_female_suffixes);
+      name = col1 + randomItem(frenchData.name1_female_suffixes);
     } else {
-      // name1_col1 + name1_col2 + female suffix
       const col2 = randomItem(frenchData.name1_col2);
       const suffix = randomItem(frenchData.name1_female_suffixes);
-      return col1 + col2 + suffix;
+      name = col1 + col2 + suffix;
     }
+  } else {
+    name = col1;
   }
 
-  // fallback if gender is unspecified or invalid
-  return col1;
+  // Apply transformations before returning
+  return applyTransformation(name, frenchData.transformations);
 }
 
 function generateLastName() {
@@ -43,7 +49,11 @@ function generateLastName() {
   const col2 = randomItem(frenchData.name2_col2);
   const base = col1 + col2;
 
-  return maybe(50) ? `of ${base}` : base;
+  // Optionally add a prefix
+  let lastName = maybe(30) ? randomItem(frenchData.name2_prefixes) + base : base;
+
+  // Apply transformations before returning
+  return applyTransformation(lastName, frenchData.transformations);
 }
 
 export function generateFrenchName(gender = "male") {

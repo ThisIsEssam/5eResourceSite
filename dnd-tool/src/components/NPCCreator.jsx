@@ -28,6 +28,11 @@ function NPCCreator() {
 
     const [loading, setLoading] = useState(false);
 
+    const [chatLock, setChatLock] = useState(true)
+
+    const [chatHistory, setChatHistory] = useState([]);
+
+
     
 
   useEffect(() => {
@@ -42,9 +47,15 @@ function NPCCreator() {
       const classesJson = await classesRes.json();
       setClasses(classesJson.results.map((c) => c.name));
 
-      const backgroundsRes = await fetch("https://api.open5e.com/v2/backgrounds");
-      const backgroundsJson = await backgroundsRes.json();
-      setBackgrounds(backgroundsJson.results || []);
+      let allBackgrounds = [];
+      let nextUrl = "https://api.open5e.com/v2/backgrounds/";
+      while (nextUrl) {
+        const res = await fetch(nextUrl);
+        const json = await res.json();
+        allBackgrounds = allBackgrounds.concat(json.results);
+        nextUrl = json.next; 
+      }
+      setBackgrounds(allBackgrounds);
 
     } catch (error) {
       console.error("Failed to load dropdown data", error);
@@ -69,7 +80,7 @@ function NPCCreator() {
 }, [heroChecked]);
 
 
-  function generateNameByLineage(lineage, gender, subtype="Anglo") {
+  function generateNameByLineage(lineage, gender=gender, subtype=getRandomItem(["Anglo", "French"])) {
   switch (lineage.toLowerCase()) {
     case 'human':
       return utils.generateHumanName(gender, subtype);
@@ -107,11 +118,51 @@ function NPCCreator() {
     return array[Math.floor(Math.random() * array.length)];
   };
 
+const sendToLLM = async(prompt, chatHistory) =>{
+  setLoading(true);
+  const res = await fetch("http://localhost:5000/api/llm", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ prompt, chat_history: chatHistory })
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Failed to fetch LLM response");
+  }
+  var chatBox = document.getElementById("chatResponse");
+  var response = await res.json();
+  chatBox.value = ''
+  for (const item of response.chat_history) {
+    if (item.content && item.content.includes("Role play in")) {
+      continue;
+    }
+    if (item.role == "assistant"){
+       chatBox.value += `🧙 ${firstName}: ${item.content}\n\n`;
+    }
+    else{
+       chatBox.value += `🗣️ User: ${item.content}\n\n`;
+    }
+    
+  }
+  setChatHistory(response.chat_history);
+  setLoading(false);
+  return response;  // { response, chat_history }
+}
+
 
   const generateNPC = async () => {
+    var chatBox = document.getElementById("chatResponse");
+    chatBox.value = ''
+    setChatHistory([])
+    setLoading(true);
      try {
     let backgroundData = background;
-
+    const fullName = `${firstName} ${lastName}`.trim();
+    var prompt = "Role play in the first person as a D&D "+ lineage +" non-playable character named "+fullName+". Have your own motivations and goals. Start off by introducing yourself, stay in first person."
+  
     if (heroChecked && background?.name) {
       const bgResponse = await fetch(
         `http://localhost:5000/api/backgrounds?background=${encodeURIComponent(background.name)}`
@@ -119,33 +170,25 @@ function NPCCreator() {
 
       if (!bgResponse.ok) throw new Error(`Failed to fetch background: ${bgResponse.statusText}`);
       backgroundData = await bgResponse.json();
-      setBackground(backgroundData); 
+      setBackground(backgroundData);
+      prompt += " You are a level "+ level+" "+className+" with a "+backgroundData.name+" background. "+ backgroundData.desc+" Add verbal quirks based on your character's attributes. Keep your responses under 50 words." 
     }
     else{
       setBackground({name:"", desc: "No description available"})
       setClassName("")
     }
+    await sendToLLM(prompt, []);
 
-    const fullName = `${firstName} ${lastName}`.trim();
-
-    const npc = {
-      name: fullName,
-      race: lineage,
-      class: className,
-      level: level,
-      background: backgroundData.name,
-      description: backgroundData.desc,
-      isHero: heroChecked,
-    };
-
-    console.log("Generated NPC:", npc);
   } catch (error) {
     console.error("Error generating NPC:", error);
   }
+  setChatLock(false)
+  setLoading(false)
 };
 
   const randomizeNPC = async () => {
     setLoading(true);
+    setChatLock(true)
     try {
       const chosenLineage = lineageLock && lineage ? lineage : getRandomItem(lineages);
       if (!lineageLock) setLineage(chosenLineage);
@@ -260,7 +303,7 @@ function NPCCreator() {
         <label>
           Background
           <select
-          value={background.name || ""}
+          value={background.name}
           disabled={!heroChecked || backgroundLock}
            onChange={e => {
       const selected = backgrounds.find(b => b.name === e.target.value);
@@ -279,17 +322,32 @@ function NPCCreator() {
         onChange={e => setBackgroundLock(e.target.checked)}/>
         Lock
       </div>
+
       <button onClick={generateNPC}>Generate NPC</button>
       <button onClick={randomizeNPC}>Randomize NPC</button>
+
       <div>
         <textarea
-      rows="5"
-      cols="40">
-
+        readOnly
+      rows="15"
+      cols="60"
+      id="chatResponse"
+      >
       </textarea>
-
       </div>
-      {loading && <div>Randomizing NPC...</div>}
+      <div>
+        <input
+        type="text"
+        size={"55"}
+        disabled={chatLock}
+        id="promptText"
+        />
+        <button onClick={() => {
+          sendToLLM(document.getElementById("promptText").value, chatHistory);
+          document.getElementById("promptText").value = '';
+        }}>Send</button>
+      </div>
+      {loading && <div>Please wait...</div>}
     </div>
     
   );

@@ -6,12 +6,12 @@ import { generateFrenchName } from './frenchNames';
  * @param {string} subtype - "Anglo" or "French"
  * @returns {{ firstName: string, lastName: string }}
  */
-export function generateHumanName(subtype = "Anglo") {
+export function generateHumanName(gender, subtype = "Anglo") {
   switch (subtype) {
     case "French":
-      return generateFrenchName();
+      return generateFrenchName(gender);
     case "Anglo":
     default:
-      return generateAngloName();
+      return generateAngloName(gender);
   }
 }

@@ -35,10 +35,10 @@ export const frenchData= {
         "*e",
     ],
     "name1_male_suffixes": [
-        "d#ré",
+        "diré",
         "eau",
         "aise",
-        "r#ien",
+        "rien",
         "ein",
         "erré",
         "ain",
