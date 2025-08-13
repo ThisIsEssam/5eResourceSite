@@ -219,9 +219,19 @@ const sendToLLM = async(prompt, chatHistory) =>{
   };
 
   return (
-    <div>
-      <h2>D&D NPC Creator</h2>
-      <label>
+    
+    <div >
+      <div className='main-title'>
+        <h1 className="title is-1" >D&D NPC Creator</h1>
+      <h2 className="subtitle is-3">Bring your NPC's to life!</h2>
+      </div>
+      
+      <div className='main-flex'>
+        <div className='box generate-box'>
+        <h1 className="subtitle is-4
+         generate-heading" >Character Profile</h1>
+      <div className="field">
+        <label>
         Hero
         <input
           type="checkbox"
@@ -229,61 +239,66 @@ const sendToLLM = async(prompt, chatHistory) =>{
           onChange={e => setHeroChecked(e.target.checked)}
         />
       </label>
-      <div>
-        <label>
-          First Name
-          <input
-            type="text"
-            value={firstName}
-            disabled={firstNameLock}
-            onChange={e => setFirstName(e.target.value)}
-          />
-          <input
+      </div>
+      <div className="field">
+        <label> First Name </label><input
             type="checkbox"
             checked={firstNameLock}
             onChange={e => setFirstNameLock(e.target.checked)}
           /> Lock
-        </label>
+          <div className='control'>
+             <input
+            className='input'
+            type="text"
+            value={firstName}
+            disabled={firstNameLock}
+            onChange={e => setFirstName(e.target.value)}
+            placeholder='Enter First Name...'
+              /> 
+          </div>
       </div>
-      <div>
-        <label>
-          Last Name
+      <div className="field">
+        <label>Last Name </label>
+        <input
+            type="checkbox"
+            checked={lastNameLock}
+            onChange={e => setLastNameLock(e.target.checked)}
+          /> Lock
+        <div>
           <input
+          className='input'
+          placeholder='Enter Last Name...'
             type="text"
             value={lastName}
             disabled={lastNameLock}
             onChange={e => setLastName(e.target.value)}
           />
-          <input
-            type="checkbox"
-            checked={lastNameLock}
-            onChange={e => setLastNameLock(e.target.checked)}
-          /> Lock
-        </label>
-
+        </div>
       </div>
-      <div>
-        <label/>Lineage
-        <select
-      value={lineage}
-      disabled={lineageLock}
-      onChange={e => setLineage(e.target.value)}
-    >
-      {lineages.map((l, idx) => (
-        <option key={idx} value={l}>
-          {l}
-        </option>
-      ))}
-    </select>
-    <input
+      <div className="field">
+        <label>Lineage</label>
+        <div className='control'><div className='select'>
+          <select
+                value={lineage}
+                disabled={lineageLock}
+                onChange={e => setLineage(e.target.value)}>
+                {lineages.map((l, idx) => (
+                  <option key={idx} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+        </div><input
       type="checkbox"
       checked={lineageLock}
       onChange={e => setLineageLock(e.target.checked)}
-    /> Lock
+    /> Lock</div>
       </div>
-      <div>
-        <label>Class
-          <select
+      <div className="field">
+        <label>Class</label>
+        <div className='control'>
+          <div className='select'>
+            <select
           value={className}
           disabled={!heroChecked || classLock}
           onChange={e => setClassName(e.target.value)}>
@@ -293,16 +308,18 @@ const sendToLLM = async(prompt, chatHistory) =>{
         </option>
       ))}
           </select>
-          <input
+          </div><input
           type="checkbox"
           checked={classLock}
           onChange ={e => setClassLock(e.target.checked)}/>Lock
-        </label>
+        </div>
+        
       </div>
-      <div>
-        <label>
-          Background
-          <select
+      <div className="field">
+        <label>Background</label>
+        <div className='control'>
+          <div className='select'>
+            <select
           value={background.name}
           disabled={!heroChecked || backgroundLock}
            onChange={e => {
@@ -314,38 +331,52 @@ const sendToLLM = async(prompt, chatHistory) =>{
         {b.name}
       </option>
           ))}
-          </select>
-        </label>
-        <input
+          </select></div><input
         type="checkbox"
         checked={backgroundLock}
         onChange={e => setBackgroundLock(e.target.checked)}/>
         Lock
+        </div>
+        
       </div>
-
-      <button onClick={generateNPC}>Generate NPC</button>
-      <button onClick={randomizeNPC}>Randomize NPC</button>
-
-      <div>
+      <div className='field'>
+        <button className="button is-primary block" onClick={generateNPC}>Generate NPC</button>
+      <button className="button is-primary" onClick={randomizeNPC}>Randomize NPC</button>
+      </div>
+      </div>
+      
+      <div className='chat-div'>
         <textarea
+        className='textarea chat'
         readOnly
-      rows="15"
-      cols="60"
-      id="chatResponse"
-      >
-      </textarea>
-      </div>
-      <div>
-        <input
+        rows="15"
+        cols="60"
+        id="chatResponse"
+        disabled={chatLock}
+        ></textarea>
+        <div style={{ display: "flex", alignItems: "center", marginTop: "1em" }}>
+          <input
         type="text"
         size={"55"}
         disabled={chatLock}
         id="promptText"
+        className='chat-send input'
         />
-        <button onClick={() => {
+        <button
+        disabled={chatLock} 
+        onClick={() => {
           sendToLLM(document.getElementById("promptText").value, chatHistory);
           document.getElementById("promptText").value = '';
-        }}>Send</button>
+        }}
+        className="button is-small send-button">Send</button>
+        </div>
+      </div>
+      </div>
+      
+      
+
+      <div>
+        
       </div>
       {loading && <div>Please wait...</div>}
     </div>
