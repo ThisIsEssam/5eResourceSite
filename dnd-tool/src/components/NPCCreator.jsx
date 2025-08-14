@@ -1,156 +1,172 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, act } from 'react';
 import * as utils from '../utils/index'
 
 function NPCCreator() {
-    const [heroChecked, setHeroChecked] = useState(false);
+  const [heroChecked, setHeroChecked] = useState(false);
 
-    const [firstName, setFirstName] = useState("");
-    const [firstNameLock, setFirstNameLock] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [firstNameLock, setFirstNameLock] = useState(false);
 
-    const [lastName, setLastName] = useState("");
-    const [lastNameLock, setLastNameLock] = useState(false);
+  const [lastName, setLastName] = useState("");
+  const [lastNameLock, setLastNameLock] = useState(false);
 
-    const [lineage, setLineage] = useState("");
-    const [lineageLock, setLineageLock] = useState(false);
+  const [lineage, setLineage] = useState("");
+  const [lineageLock, setLineageLock] = useState(false);
 
-    const [className, setClassName] = useState("");
-    const [classLock, setClassLock] = useState(true);
+  const [className, setClassName] = useState("");
+  const [classLock, setClassLock] = useState(true);
 
-    const [level, setLevel] = useState("1");
-    const [levelLock, setLevelLock] = useState(true);
+  const [level, setLevel] = useState("1");
+  const [levelLock, setLevelLock] = useState(true);
 
-    const [background, setBackground] = useState({});
-    const [backgroundLock, setBackgroundLock] = useState(true);
+  const [background, setBackground] = useState({});
+  const [backgroundLock, setBackgroundLock] = useState(true);
 
-    const [lineages, setLineages] = useState([]);
-    const [classes, setClasses] = useState([]);
-    const [backgrounds, setBackgrounds] = useState([]);
+  const [lineages, setLineages] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [backgrounds, setBackgrounds] = useState([]);
 
-    const [loading, setLoading] = useState(false);
+  const [alignments, setAligntments] = useState([]);
+  const [alignment, setAlignment] = useState([])
 
-    const [chatLock, setChatLock] = useState(true)
+  const [loading, setLoading] = useState(false);
 
-    const [chatHistory, setChatHistory] = useState([]);
+  const [chatLock, setChatLock] = useState(true)
+
+  const [chatHistory, setChatHistory] = useState([]);
+  const [activeSection, setActiveSection] = useState("profile");
+
+  const [notes, setNotes] = useState(["", "", ""])
 
 
-    
+
 
   useEffect(() => {
-  async function fetchData() {
-    try {
-      const lineagesRes = await fetch("https://www.dnd5eapi.co/api/races");
-      const lineagesJson = await lineagesRes.json();
-      const lineageList = [...lineagesJson.results.map((r) => r.name), "Warforged"];
-      setLineages(lineageList);
+    async function fetchData() {
+      try {
+        setAligntments(["Lawful-Good", "Lawful-Neutral", "Lawful-Evil", "Neutral-Good", "Neutral-Neutral", "Neutral-Evil", "Chaotic-Good", "Chaotic-Neutral", "Chaotic-Evil"])
+        const lineagesRes = await fetch("https://www.dnd5eapi.co/api/races");
+        const lineagesJson = await lineagesRes.json();
+        const lineageList = [...lineagesJson.results.map((r) => r.name), "Warforged"];
+        setLineages(lineageList);
 
-      const classesRes = await fetch("https://www.dnd5eapi.co/api/classes");
-      const classesJson = await classesRes.json();
-      setClasses(classesJson.results.map((c) => c.name));
+        const classesRes = await fetch("https://www.dnd5eapi.co/api/classes");
+        const classesJson = await classesRes.json();
+        setClasses(classesJson.results.map((c) => c.name));
 
-      let allBackgrounds = [];
-      let nextUrl = "https://api.open5e.com/v2/backgrounds/";
-      while (nextUrl) {
-        const res = await fetch(nextUrl);
-        const json = await res.json();
-        allBackgrounds = allBackgrounds.concat(json.results);
-        nextUrl = json.next; 
+        let allBackgrounds = [];
+        let nextUrl = "https://api.open5e.com/v2/backgrounds/";
+        while (nextUrl) {
+          const res = await fetch(nextUrl);
+          const json = await res.json();
+          allBackgrounds = allBackgrounds.concat(json.results);
+          nextUrl = json.next;
+        }
+        setBackgrounds(allBackgrounds);
+
+      } catch (error) {
+        console.error("Failed to load dropdown data", error);
       }
-      setBackgrounds(allBackgrounds);
+    }
+    fetchData();
+  }, []);
+  useEffect(() => {
+    if (heroChecked) {
+      setClassLock(false);
+      setLevelLock(false);
+      setBackgroundLock(false);
 
-    } catch (error) {
-      console.error("Failed to load dropdown data", error);
+    } else {
+      setClassLock(true);
+      setLevelLock(true);
+      setBackgroundLock(true);
+      setClassName("");
+      setLevel("1");
+      setBackground({ name: "", desc: "" });
+    }
+  }, [heroChecked]);
+
+
+  function generateNameByLineage(lineage, gender = gender, subtype = getRandomItem(["Anglo", "French"])) {
+    switch (lineage.toLowerCase()) {
+      case 'human':
+        return utils.generateHumanName(gender, subtype);
+      case 'dragonborn':
+        return utils.generateDragonbornName(gender);
+      case 'dwarf':
+        return utils.generateDwarfName(gender);
+      case 'elf':
+        return utils.generateElfName(gender)
+      case 'gnome':
+        return utils.generateGnomeName(gender)
+      case 'orc':
+        return utils.generateOrcName(gender)
+      case 'tiefling':
+        return utils.generateTieflingName(gender)
+      case 'warforged':
+        return utils.generateWarforgedName(gender)
+      case 'halfling':
+        return utils.generateHalflingName(gender)
+      case 'half-elf':
+        return {
+          firstName: (utils.generateElfName(gender).firstName),
+          lastName: utils.generateHumanName(gender, subtype).lastName,
+        }
+      case 'half-orc':
+        return {
+          firstName: (utils.generateOrcName(gender).firstName),
+          lastName: utils.generateHumanName(gender, subtype).lastName,
+        }
+      default:
+        return { firstName: "Nameless", lastName: "One" };
     }
   }
-  fetchData();
-}, []);
-    useEffect(() => {
-  if (heroChecked) {
-    setClassLock(false);
-    setLevelLock(false);
-    setBackgroundLock(false);
-    
-  } else {
-    setClassLock(true);
-    setLevelLock(true);
-    setBackgroundLock(true);
-    setClassName("");
-    setLevel("1");
-    setBackground({ name: "", desc: "" });
-  }
-}, [heroChecked]);
-
-
-  function generateNameByLineage(lineage, gender=gender, subtype=getRandomItem(["Anglo", "French"])) {
-  switch (lineage.toLowerCase()) {
-    case 'human':
-      return utils.generateHumanName(gender, subtype);
-    case 'dragonborn':
-      return utils.generateDragonbornName(gender);
-    case 'dwarf':
-      return utils.generateDwarfName(gender);
-    case 'elf':
-      return utils.generateElfName(gender)
-    case 'gnome':
-      return utils.generateGnomeName(gender)
-    case 'orc':
-      return utils.generateOrcName(gender)
-    case'tiefling':
-      return utils.generateTieflingName(gender)
-    case 'warforged':
-      return utils.generateWarforgedName(gender)
-    case 'halfling':
-      return utils.generateHalflingName(gender)
-    case 'half-elf':
-      return {
-    firstName: (utils.generateElfName(gender).firstName),
-    lastName: utils.generateHumanName(gender, subtype).lastName,
-  }
-    case 'half-orc':
-      return {
-    firstName: (utils.generateOrcName(gender).firstName),
-    lastName: utils.generateHumanName(gender, subtype).lastName,
-  }
-    default:
-      return { firstName: "Nameless", lastName: "One" };
-  }
-}
-  const getRandomItem=(array) => {
+  const getRandomItem = (array) => {
     return array[Math.floor(Math.random() * array.length)];
   };
 
-const sendToLLM = async(prompt, chatHistory) =>{
-  setLoading(true);
-  const res = await fetch("http://localhost:5000/api/llm", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ prompt, chat_history: chatHistory })
-  });
+  function toProperCase(str) {
+    if (!str) return "";
+    return str
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  }
 
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.error || "Failed to fetch LLM response");
+  const sendToLLM = async (prompt, chatHistory) => {
+    setLoading(true);
+    const res = await fetch("http://localhost:5000/api/llm", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ prompt, chat_history: chatHistory })
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed to fetch LLM response");
+    }
+    var chatBox = document.getElementById("chatResponse");
+    var response = await res.json();
+    chatBox.value = ''
+    chatBox.className = "textarea chat is-success"
+    for (const item of response.chat_history) {
+      if (item.content && item.content.includes("Role play in")) {
+        continue;
+      }
+      if (item.role == "assistant") {
+        chatBox.value += `🧙 ${firstName}: ${item.content}\n\n`;
+      }
+      else {
+        chatBox.value += `🗣️ User: ${item.content}\n\n`;
+      }
+
+    }
+    setChatHistory(response.chat_history);
+    setLoading(false);
+    return response;  // { response, chat_history }
   }
-  var chatBox = document.getElementById("chatResponse");
-  var response = await res.json();
-  chatBox.value = ''
-  for (const item of response.chat_history) {
-    if (item.content && item.content.includes("Role play in")) {
-      continue;
-    }
-    if (item.role == "assistant"){
-       chatBox.value += `🧙 ${firstName}: ${item.content}\n\n`;
-    }
-    else{
-       chatBox.value += `🗣️ User: ${item.content}\n\n`;
-    }
-    
-  }
-  setChatHistory(response.chat_history);
-  setLoading(false);
-  return response;  // { response, chat_history }
-}
 
 
   const generateNPC = async () => {
@@ -158,37 +174,76 @@ const sendToLLM = async(prompt, chatHistory) =>{
     chatBox.value = ''
     setChatHistory([])
     setLoading(true);
-     try {
-    let backgroundData = background;
-    const fullName = `${firstName} ${lastName}`.trim();
-    var prompt = "Role play in the first person as a D&D "+ lineage +" non-playable character named "+fullName+". Have your own motivations and goals. Start off by introducing yourself, stay in first person."
-  
-    if (heroChecked && background?.name) {
-      const bgResponse = await fetch(
-        `http://localhost:5000/api/backgrounds?background=${encodeURIComponent(background.name)}`
-      );
+    let hasError = false;
 
-      if (!bgResponse.ok) throw new Error(`Failed to fetch background: ${bgResponse.statusText}`);
-      backgroundData = await bgResponse.json();
-      setBackground(backgroundData);
-      prompt += " You are a level "+ level+" "+className+" with a "+backgroundData.name+" background. "+ backgroundData.desc+" Add verbal quirks based on your character's attributes. Keep your responses under 50 words." 
-    }
-    else{
-      setBackground({name:"", desc: "No description available"})
-      setClassName("")
-    }
-    await sendToLLM(prompt, []);
 
-  } catch (error) {
-    console.error("Error generating NPC:", error);
-  }
-  setChatLock(false)
-  setLoading(false)
-};
+    const firstInput = document.getElementById("firstName");
+    const lastInput = document.getElementById("lastName");
+    if (firstName.trim() === "") {
+      if (firstInput) {
+        firstInput.className = "input is-danger";
+        firstInput.placeholder = "Error! A first name is required!";
+      }
+      hasError = true;
+    } else if (firstInput) {
+      firstInput.className = "input";
+      firstInput.placeholder = "Enter First Name...";
+    }
+
+    if (lastName.trim() === "") {
+      if (lastInput) {
+        lastInput.className = "input is-danger";
+        lastInput.placeholder = "Error! A last name is required!";
+      }
+      hasError = true;
+    } else if (lastInput) {
+      lastInput.className = "input";
+      lastInput.placeholder = "Enter Last Name...";
+    }
+
+    if (hasError) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      let backgroundData = background;
+      const fullName = `${firstName} ${lastName}`.trim();
+      var prompt = "Role play in the first person as a " + alignment + " D&D " + lineage + " non-playable character named " + fullName + ". Have your own motivations and goals. Start off by introducing yourself, stay in first person."
+      for (const note of notes) {
+        if (note && note.trim() !== "") {
+          prompt += " " + note;
+        }
+      }
+      if (heroChecked && background?.name) {
+        const bgResponse = await fetch(
+          `http://localhost:5000/api/backgrounds?background=${encodeURIComponent(background.name)}`
+        );
+
+        if (!bgResponse.ok) throw new Error(`Failed to fetch background: ${bgResponse.statusText}`);
+        backgroundData = await bgResponse.json();
+        setBackground(backgroundData);
+        prompt += " You are a level " + level + " " + className + " with a " + backgroundData.name + " background. " + backgroundData.desc + " Add verbal quirks based on your character's attributes. Keep your responses under 50 words."
+      }
+      else {
+        prompt += "You are a commoner."
+        setBackground({ name: "", desc: "No description available" })
+        setClassName("")
+      }
+      chatBox.className = "textarea chat is-success"
+      await sendToLLM(prompt, []);
+
+    } catch (error) {
+      console.error("Error generating NPC:", error);
+    }
+    setChatLock(false)
+    setLoading(false)
+  };
 
   const randomizeNPC = async () => {
     setLoading(true);
     setChatLock(true)
+    setNotes(["", "", ""])
     try {
       const chosenLineage = lineageLock && lineage ? lineage : getRandomItem(lineages);
       if (!lineageLock) setLineage(chosenLineage);
@@ -202,6 +257,9 @@ const sendToLLM = async(prompt, chatHistory) =>{
         if (!lastNameLock) setLastName(lastName);
       }
 
+      const randomAlignment = getRandomItem(alignments)
+      setAlignment(randomAlignment)
+
       if (!backgroundLock && backgrounds.length > 0) {
         const randomBackground = getRandomItem(backgrounds);
         const bgResponse = await fetch(`http://localhost:5000/api/backgrounds?background=${encodeURIComponent(randomBackground.name)}`);
@@ -210,7 +268,7 @@ const sendToLLM = async(prompt, chatHistory) =>{
         setBackground(bgDetail);
       }
 
-      
+
     } catch (error) {
       console.error("Error during NPC randomization:", error);
     } finally {
@@ -219,168 +277,241 @@ const sendToLLM = async(prompt, chatHistory) =>{
   };
 
   return (
-    
-    <div >
+
+    <div>
       <div className='main-title'>
         <h1 className="title is-1" >D&D NPC Creator</h1>
-      <h2 className="subtitle is-3">Bring your NPC's to life!</h2>
+        <h2 className="subtitle is-3">Bring your NPC's to life!</h2>
       </div>
-      
       <div className='main-flex'>
         <div className='box generate-box'>
-        <h1 className="subtitle is-4
+          <nav className='breadcrumb'>
+            <ul>
+              <li>
+                <a href="#"
+                  className={activeSection === "profile" ? "is-active" : ""}
+                  onClick={() => setActiveSection("profile")}>Character Profile</a>
+              </li>
+              <li>
+                <a href="#"
+                  className={activeSection === "notes" ? "is-active" : ""}
+                  onClick={() => setActiveSection("notes")}>Notes</a>
+              </li>
+            </ul>
+          </nav>
+          {activeSection === "profile" && (
+            <>
+              <h1 className="subtitle is-4
          generate-heading" >Character Profile</h1>
-      <div className="field">
-        <label>
-        Hero
-        <input
-          type="checkbox"
-          checked={heroChecked}
-          onChange={e => setHeroChecked(e.target.checked)}
-        />
-      </label>
-      </div>
-      <div className="field">
-        <label> First Name </label><input
-            type="checkbox"
-            checked={firstNameLock}
-            onChange={e => setFirstNameLock(e.target.checked)}
-          /> Lock
-          <div className='control'>
-             <input
-            className='input'
-            type="text"
-            value={firstName}
-            disabled={firstNameLock}
-            onChange={e => setFirstName(e.target.value)}
-            placeholder='Enter First Name...'
-              /> 
-          </div>
-      </div>
-      <div className="field">
-        <label>Last Name </label>
-        <input
-            type="checkbox"
-            checked={lastNameLock}
-            onChange={e => setLastNameLock(e.target.checked)}
-          /> Lock
-        <div>
-          <input
-          className='input'
-          placeholder='Enter Last Name...'
-            type="text"
-            value={lastName}
-            disabled={lastNameLock}
-            onChange={e => setLastName(e.target.value)}
-          />
-        </div>
-      </div>
-      <div className="field">
-        <label>Lineage</label>
-        <div className='control'><div className='select'>
-          <select
-                value={lineage}
-                disabled={lineageLock}
-                onChange={e => setLineage(e.target.value)}>
-                {lineages.map((l, idx) => (
-                  <option key={idx} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-        </div><input
-      type="checkbox"
-      checked={lineageLock}
-      onChange={e => setLineageLock(e.target.checked)}
-    /> Lock</div>
-      </div>
-      <div className="field">
-        <label>Class</label>
-        <div className='control'>
-          <div className='select'>
-            <select
-          value={className}
-          disabled={!heroChecked || classLock}
-          onChange={e => setClassName(e.target.value)}>
-      {classes.map((l, idx) => (
-        <option key={idx} value={l}>
-          {l}
-        </option>
-      ))}
-          </select>
-          </div><input
-          type="checkbox"
-          checked={classLock}
-          onChange ={e => setClassLock(e.target.checked)}/>Lock
-        </div>
-        
-      </div>
-      <div className="field">
-        <label>Background</label>
-        <div className='control'>
-          <div className='select'>
-            <select
-          value={background.name}
-          disabled={!heroChecked || backgroundLock}
-           onChange={e => {
-      const selected = backgrounds.find(b => b.name === e.target.value);
-      setBackground(selected);
-    }}>
-              {backgrounds.map((b, idx) => (
-      <option key={idx} value={b.name}>
-        {b.name}
-      </option>
-          ))}
-          </select></div><input
-        type="checkbox"
-        checked={backgroundLock}
-        onChange={e => setBackgroundLock(e.target.checked)}/>
-        Lock
-        </div>
-        
-      </div>
-      <div className='field'>
-        <button className="button is-primary block" onClick={generateNPC}>Generate NPC</button>
-      <button className="button is-primary" onClick={randomizeNPC}>Randomize NPC</button>
-      </div>
-      </div>
-      
-      <div className='chat-div'>
-        <textarea
-        className='textarea chat'
-        readOnly
-        rows="15"
-        cols="60"
-        id="chatResponse"
-        disabled={chatLock}
-        ></textarea>
-        <div style={{ display: "flex", alignItems: "center", marginTop: "1em" }}>
-          <input
-        type="text"
-        size={"55"}
-        disabled={chatLock}
-        id="promptText"
-        className='chat-send input'
-        />
-        <button
-        disabled={chatLock} 
-        onClick={() => {
-          sendToLLM(document.getElementById("promptText").value, chatHistory);
-          document.getElementById("promptText").value = '';
-        }}
-        className="button is-small send-button">Send</button>
-        </div>
-      </div>
-      </div>
-      
-      
+              <div className="field">
+                <label>
+                  Hero
+                  <input
+                    type="checkbox"
+                    checked={heroChecked}
+                    onChange={e => setHeroChecked(e.target.checked)}
+                  />
+                </label>
+              </div>
+              <div className="field">
+                <label> First Name </label><input
+                  type="checkbox"
+                  checked={firstNameLock}
+                  onChange={e => setFirstNameLock(e.target.checked)}
+                /> Lock
+                <div className='control'>
+                  <input
+                    id="firstName"
+                    className='input'
+                    type="text"
+                    value={toProperCase(firstName)}
+                    disabled={firstNameLock}
+                    onChange={e => setFirstName(e.target.value)}
+                    placeholder='Enter First Name...'
+                  />
+                </div>
+              </div>
+              <div className="field">
+                <label>Last Name </label>
+                <input
+                  type="checkbox"
+                  checked={lastNameLock}
+                  onChange={e => setLastNameLock(e.target.checked)}
+                /> Lock
+                <div>
+                  <input
+                    id="lastName"
+                    className='input'
+                    placeholder='Enter Last Name...'
+                    type="text"
+                    value={toProperCase(lastName)}
+                    disabled={lastNameLock}
+                    onChange={e => setLastName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className='field'>
+                <label>Alignment</label>
+                <div className='control'>
+                  <div className='select'>
+                    <select
+                      value={alignment}
+                      onChange={e => setAlignment(e.target.value)}>
+                      {alignments.map((l, idx) => (
+                        <option key={idx} value={l}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field">
+                <label>Lineage</label>
+                <div className='control'><div className='select'>
+                  <select
+                    value={lineage}
+                    disabled={lineageLock}
+                    onChange={e => setLineage(e.target.value)}>
+                    {lineages.map((l, idx) => (
+                      <option key={idx} value={l}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </div><input
+                    type="checkbox"
+                    checked={lineageLock}
+                    onChange={e => setLineageLock(e.target.checked)}
+                  /> Lock</div>
+              </div>
+              <div className="field">
+                <label>Class</label>
+                <div className='control'>
+                  <div className='select'>
+                    <select
+                      value={className}
+                      disabled={!heroChecked || classLock}
+                      onChange={e => setClassName(e.target.value)}>
+                      {classes.map((l, idx) => (
+                        <option key={idx} value={l}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                  </div><input
+                    type="checkbox"
+                    checked={classLock}
+                    onChange={e => setClassLock(e.target.checked)} />Lock
+                </div>
 
-      <div>
-        
+              </div>
+              <div className="field">
+                <label>Background</label>
+                <div className='control'>
+                  <div className='select'>
+                    <select
+                      value={background.name}
+                      disabled={!heroChecked || backgroundLock}
+                      onChange={e => {
+                        const selected = backgrounds.find(b => b.name === e.target.value);
+                        setBackground(selected);
+                      }}>
+                      {backgrounds.map((b, idx) => (
+                        <option key={idx} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select></div><input
+                    type="checkbox"
+                    checked={backgroundLock}
+                    onChange={e => setBackgroundLock(e.target.checked)} />
+                  Lock
+                </div>
+              </div>
+              <div className='field'>
+                <button className="button is-primary block" onClick={generateNPC}>Generate NPC</button>
+                <button className="button is-primary block" onClick={randomizeNPC}>Randomize NPC</button>
+              </div>
+            </>
+          )}
+          {activeSection === "notes" && (
+            <>
+              <div className="column">
+                <div className="field">
+                  <label className="label">Note 1</label>
+                  <div className="control">
+                    <input className="input" type="text" placeholder="50 characters max..." maxLength="50" id="notesOne"
+                      onChange={e => {
+                        const newNotes = [...notes];
+                        newNotes[1] = e.target.value;
+                        setNotes(newNotes);
+                      }}
+                      value={notes[1]} />
+                  </div>
+                </div>
+                <div className="field">
+                  <label className="label">Note 2</label>
+                  <div className="control">
+                    <input className="input" type="text" placeholder="50 characters max..." maxLength="50" id="notesTwo"
+                      onChange={e => {
+                        const newNotes = [...notes];
+                        newNotes[2] = e.target.value;
+                        setNotes(newNotes);
+                      }} 
+                      value={notes[2]}/>
+                  </div>
+                </div>
+                <div className="field">
+                  <label className="label">Note 3</label>
+                  <div className="control">
+                    <input className="input" type="text" placeholder="50 characters max..." maxLength="50" id="notesThree"
+                      onChange={e => {
+                        const newNotes = [...notes];
+                        newNotes[3] = e.target.value;
+                        setNotes(newNotes);
+                      }} 
+                      value={notes[3]}/>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+        </div>
+
+        <div className='chat-div'>
+          <textarea
+            className='textarea chat'
+            readOnly
+            rows="15"
+            cols="60"
+            id="chatResponse"
+            disabled={chatLock}
+          ></textarea>
+          <div style={{ display: "flex", alignItems: "center", marginTop: "1em" }}>
+            <input
+              type="text"
+              size={"55"}
+              disabled={chatLock}
+              id="promptText"
+              className='chat-send input'
+            />
+            <button
+              disabled={chatLock}
+              onClick={() => {
+                sendToLLM(document.getElementById("promptText").value, chatHistory);
+                document.getElementById("promptText").value = '';
+              }}
+              className="button is-small send-button">Send</button>
+          </div>
+        </div>
       </div>
-      {loading && <div>Please wait...</div>}
+      <div className='loading'>
+        {loading && <div>Please wait...</div>}
+      </div>
     </div>
-    
+
   );
 }
 

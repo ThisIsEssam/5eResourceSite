@@ -2,10 +2,12 @@
 
 body {
   margin: 0;
-  font-family: sans-serif;
+  font-family:Verdana, Geneva, Tahoma, sans-serif;
+  background-color: rgb(58, 58, 58);
 }
 
 .main-flex{
+  background-color: ;
   display: flex;
   align-items: flex-start; 
   gap: 2em;
@@ -54,3 +56,10 @@ body {
   text-align: center;
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif
 }
+
+.loading{
+  text-align: center;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+}
+
+
