@@ -135,6 +135,8 @@ function NPCCreator() {
 
   const sendToLLM = async (prompt, chatHistory) => {
     setLoading(true);
+    var chatBox = document.getElementById("chatResponse");
+    chatBox.className = "textarea chat is-success";
     const res = await fetch("http://localhost:5000/api/llm", {
       method: "POST",
       headers: {
@@ -150,9 +152,9 @@ function NPCCreator() {
     var chatBox = document.getElementById("chatResponse");
     var response = await res.json();
     chatBox.value = ''
-    chatBox.className = "textarea chat is-success"
+    
     for (const item of response.chat_history) {
-      if (item.content && item.content.includes("Role play in")) {
+      if (item.content && (item.content.includes("Role play in") || item.content.includes("Resume where you left off."))) {
         continue;
       }
       if (item.role == "assistant") {
@@ -164,6 +166,7 @@ function NPCCreator() {
 
     }
     setChatHistory(response.chat_history);
+    setChatLock(false)
     setLoading(false);
     return response;  // { response, chat_history }
   }
@@ -209,7 +212,7 @@ function NPCCreator() {
     try {
       let backgroundData = background;
       const fullName = `${firstName} ${lastName}`.trim();
-      var prompt = "Role play in the first person as a " + alignment + " D&D " + lineage + " non-playable character named " + fullName + ". Have your own motivations and goals. Start off by introducing yourself, stay in first person."
+      var prompt = "Role play in the first person as a " + alignment + " D&D " + lineage + " non-playable character named " + fullName + ". Have your own motivations and goals. Start off by introducing yourself, stay in first person, keep your responses to around 50 words."
       for (const note of notes) {
         if (note && note.trim() !== "") {
           prompt += " " + note;
@@ -223,10 +226,10 @@ function NPCCreator() {
         if (!bgResponse.ok) throw new Error(`Failed to fetch background: ${bgResponse.statusText}`);
         backgroundData = await bgResponse.json();
         setBackground(backgroundData);
-        prompt += " You are a level " + level + " " + className + " with a " + backgroundData.name + " background. " + backgroundData.desc + " Add verbal quirks based on your character's attributes. Keep your responses under 50 words."
+        prompt += " You are a level " + level + " " + className + " with a " + backgroundData.name + " background. " + backgroundData.desc + " Add verbal quirks based on your character's attributes."
       }
       else {
-        prompt += "You are a commoner."
+        prompt += " You are a commoner."
         setBackground({ name: "", desc: "No description available" })
         setClassName("")
       }
@@ -276,6 +279,34 @@ function NPCCreator() {
     }
   };
 
+  const exportHero = async (chatHistory) => {
+    const now = new Date()
+    const timestamp = now.toISOString().replace(/[:.]/g, '-');
+    const blob = new Blob([JSON.stringify(chatHistory, null, 2)], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${firstName}_${lastName}_${timestamp}.txt`;
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  const importHero = async (e) => {
+    const file = e.target.files[0]
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      try {
+        const importedData = JSON.parse(event.target.result)
+        setChatHistory(importedData)
+        alert("Import successful!")
+        sendToLLM("Resume where you left off.", importedData)
+      }
+      catch {
+        alert("Failed to import: Invalid file format");
+      }
+    };
+    reader.readAsText(file)
+  };
+
   return (
 
     <div>
@@ -290,14 +321,20 @@ function NPCCreator() {
               <li>
                 <a href="#"
                   className={activeSection === "profile" ? "is-active" : ""}
-                  onClick={() => setActiveSection("profile")}>Character Profile</a>
+                  onClick={() => setActiveSection("profile")}>Profile</a>
               </li>
               <li>
                 <a href="#"
                   className={activeSection === "notes" ? "is-active" : ""}
                   onClick={() => setActiveSection("notes")}>Notes</a>
               </li>
+              <li>
+                <a href="#"
+                  className={activeSection === "import" ? "is-active" : ""}
+                  onClick={() => setActiveSection("import")}>Import/Export</a>
+              </li>
             </ul>
+
           </nav>
           {activeSection === "profile" && (
             <>
@@ -430,18 +467,32 @@ function NPCCreator() {
                 </div>
               </div>
               <div className='field'>
-                <button className="button is-primary block" onClick={generateNPC}>Generate NPC</button>
-                <button className="button is-primary block" onClick={randomizeNPC}>Randomize NPC</button>
+                <button className="button is-info is-dark block port-button" onClick={randomizeNPC}>Randomize NPC</button>
+                <button className="button is-info is-dark block port-button" onClick={generateNPC}>Generate NPC</button>
               </div>
             </>
           )}
           {activeSection === "notes" && (
             <>
+              <h1 className="subtitle is-4
+         generate-heading" >Notes</h1>
               <div className="column">
                 <div className="field">
                   <label className="label">Note 1</label>
                   <div className="control">
                     <input className="input" type="text" placeholder="50 characters max..." maxLength="50" id="notesOne"
+                      onChange={e => {
+                        const newNotes = [...notes];
+                        newNotes[0] = e.target.value;
+                        setNotes(newNotes);
+                      }}
+                      value={notes[0]} />
+                  </div>
+                </div>
+                <div className="field">
+                  <label className="label">Note 2</label>
+                  <div className="control">
+                    <input className="input" type="text" placeholder="50 characters max..." maxLength="50" id="notesTwo"
                       onChange={e => {
                         const newNotes = [...notes];
                         newNotes[1] = e.target.value;
@@ -451,35 +502,54 @@ function NPCCreator() {
                   </div>
                 </div>
                 <div className="field">
-                  <label className="label">Note 2</label>
-                  <div className="control">
-                    <input className="input" type="text" placeholder="50 characters max..." maxLength="50" id="notesTwo"
-                      onChange={e => {
-                        const newNotes = [...notes];
-                        newNotes[2] = e.target.value;
-                        setNotes(newNotes);
-                      }} 
-                      value={notes[2]}/>
-                  </div>
-                </div>
-                <div className="field">
                   <label className="label">Note 3</label>
                   <div className="control">
                     <input className="input" type="text" placeholder="50 characters max..." maxLength="50" id="notesThree"
                       onChange={e => {
                         const newNotes = [...notes];
-                        newNotes[3] = e.target.value;
+                        newNotes[2] = e.target.value;
                         setNotes(newNotes);
-                      }} 
-                      value={notes[3]}/>
+                      }}
+                      value={notes[2]} />
                   </div>
                 </div>
               </div>
             </>
           )}
-
+          {activeSection === "import" && (
+            <>
+              <h1 className="subtitle is-4
+         generate-heading" >Import/Export</h1>
+              <div className='block'>
+                <div className="file has-name is-boxed">
+                  <label className="file-label">
+                    <input
+                      className="file-input"
+                      type="file"
+                      accept=".txt"
+                      name="import"
+                      onChange={importHero}
+                    />
+                    <span className="file-cta">
+                      <span className="file-icon">
+                        <i className="fas fa-upload"></i>
+                      </span>
+                      <span className="file-label">
+                        Import
+                      </span>
+                    </span>
+                    <span className="file-name" id="importFileName">
+                      {/* Filename will appear here */}
+                    </span>
+                  </label>
+                </div>
+                <button className='button port-button'
+                  disabled={chatLock}
+                  onClick={() => exportHero(chatHistory)}>Export</button>
+              </div>
+            </>
+          )}
         </div>
-
         <div className='chat-div'>
           <textarea
             className='textarea chat'
@@ -503,15 +573,15 @@ function NPCCreator() {
                 sendToLLM(document.getElementById("promptText").value, chatHistory);
                 document.getElementById("promptText").value = '';
               }}
-              className="button is-small send-button">Send</button>
+              className="button is-primary send-button port-button">Send</button>
           </div>
+
         </div>
       </div>
       <div className='loading'>
         {loading && <div>Please wait...</div>}
       </div>
     </div>
-
   );
 }
 

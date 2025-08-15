@@ -41,11 +41,7 @@ body {
   display: inline-block;
 }
 
-.send-button{
-  height: 34px;
-  margin-left: 1em;
-  display: inline-block;
-}
+
 
 .chat-div{
   width: 800px;
@@ -62,4 +58,7 @@ body {
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
 
+.port-button{
+  margin: 0.5em;
+}
 
