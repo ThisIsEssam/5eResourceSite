@@ -1,8 +1,8 @@
 # 🎲 5e NPC Generator
 
-Your players just walked into a tavern and you have absolutely nothing prepared. No problem.
+You have a tavern fully decked out in interesting lore, characters and backstories waiting for your crew of adventurers. That's when...they decide to head in the opposite direction towards a run-down shack with nothing on the inside. No problem, I've got you covered.
 
-**5e NPC Generator** is a D&D 5th Edition tool that instantly creates fully-formed NPCs on the fly — complete with lineage, class, lineage-appropriate name, and spells (for the magic-users). Whether you need a grizzled Dwarven Fighter or a mysterious Tiefling Warlock, this tool has you covered.
+**5e NPC Generator** is a D&D 5th Edition tool that instantly creates fully-formed NPCs on the fly — complete with lineage, class, lineage-appropriate name, and spells (for the magic-users). Whether you need a grizzled Spartan fighter with a pet chicken and an obsession with spears or an Irish gnome time wizard who was once a university professor, I've got it all. 
 
 Built for Dungeon Masters who like to improvise (or just forgot to prep).
 
